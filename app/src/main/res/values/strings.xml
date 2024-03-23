@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">android-tools</string>
+    <string name="accessibility_service_description">这是一个辅助功能服务的描述</string>
+</resources>
