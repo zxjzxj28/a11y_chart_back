@@ -19,6 +19,7 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -81,11 +82,28 @@ public class MyAccessibilityService extends AccessibilityService {
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
         int eventType = event.getEventType();
+//        Log.i("type",">>>type: "+ eventType);
+//        Log.i("type",">>>type: "+ Integer.toHexString(eventType));
+//        if (event.getEventType() == AccessibilityEvent.TYPE_VIEW_FOCUSED || event.getEventType() == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED
+//        || event.getWindowChanges() == AccessibilityEvent.WINDOWS_CHANGE_FOCUSED || event.getWindowChanges() == AccessibilityEvent.WINDOWS_CHANGE_ACCESSIBILITY_FOCUSED) {
+        if(event.getEventType() == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED){
+            AccessibilityNodeInfo nodeInfo = event.getSource();
+            if (nodeInfo != null) {
+                // 获取焦点控件的相关信息
+                CharSequence text = nodeInfo.getText();
+                CharSequence contentDescription = nodeInfo.getContentDescription();
+                // 可以根据需要获取其他信息，如控件的ID、类名等
+                // 处理获取到的信息，例如打印
+                // 到日志中或者发送到远程服务器
+                Log.d("AccessibilityService", "Focused control: " + text + ", " + contentDescription);
+                nodeInfo.recycle(); // 释放 AccessibilityNodeInfo 对象
+            }
+        }
         if(1==1){
             return;
         }
 
-        Log.i("type",">>>type: "+ eventType);
+
 //        if(eventType != AccessibilityEvent.TYPE_VIEW_LONG_CLICKED){
 //            return;
 //        }
@@ -119,7 +137,7 @@ public class MyAccessibilityService extends AccessibilityService {
 //        // 获取当前活动页面的所有可聚焦控件
         List<AccessibilityNodeInfo> focusableNodes = new ArrayList<>();
         Integer count = 0;
-        findFocusableNodes(null, rootNode, focusableNodes,count);
+//        findFocusableNodes(null, rootNode, focusableNodes,count);
         Log.i("aa", ">>>>>>>focus size:" + focusableNodes.size());
 //        // 处理可聚焦控件
 //        for (AccessibilityNodeInfo node : focusableNodes) {
@@ -151,12 +169,31 @@ public class MyAccessibilityService extends AccessibilityService {
         if(rootNode == null){
             return;
         }
+
+        // 遍历子节点
+        int childCount = rootNode.getChildCount();
+        int recyclerViewIndex = 0;
+        for (int i = 0; i < childCount; i++) {
+            AccessibilityNodeInfo childNode = rootNode.getChild(i);
+            if (childNode == null){
+                continue;
+            }
+            Log.i("root",">>>>" + childNode.getClassName());
+            if(childNode.getText() != null){
+                Log.i("root",">>>>" + childNode.getText().toString());
+            }
+            if(childNode.getClassName().equals("androidx.recyclerview.widget.RecyclerView")){
+                recyclerViewIndex = i;
+            }
+        }
+
         List<AccessibilityNodeInfo> focusableNodes = new ArrayList<>();
         Integer count = 0;
         findFocusableNodes(null, rootNode, focusableNodes,count);
         Log.i("aa", ">>>>>>>focus size:" + focusableNodes.size());
         List<FocusBox> list = new ArrayList<>();
         focusableNodes.forEach(e->{
+
             Rect boundsInScreen = new Rect();
             e.getBoundsInScreen(boundsInScreen);
             int left = boundsInScreen.left;
@@ -164,7 +201,7 @@ public class MyAccessibilityService extends AccessibilityService {
             int bottom = boundsInScreen.bottom;
             int right = boundsInScreen.right;
             Log.d("AccessibilityService", "text:"+ e.getText() +", 控件坐标：left=" + left + ", top=" + top + ", right=" + right + ", bottom=" + bottom);
-            list.add(new FocusBox(top,bottom,left,right,e != null && e.getText() != null ? e.getText().toString() : e.getClassName().toString()));
+            list.add(new FocusBox(top,bottom,left,right,e != null && e.getText() != null ? e.getText().toString() : e.getClassName().toString(), e.getExtras().getString("id")));
         });
         Intent msg = new Intent("ACTION_RESULT");
         JSONObject res = new JSONObject();
@@ -176,6 +213,7 @@ public class MyAccessibilityService extends AccessibilityService {
                 JSONObject jsonObject = new JSONObject();
                 // 将 obj 对象的属性放入 jsonObject 中
                 // 示例：jsonObject.put("key", obj.getValue());
+                jsonObject.put("id", focusBox.id);
                 jsonObject.put("text", focusBox.text);
                 jsonObject.put("left", focusBox.left);
                 jsonObject.put("top", focusBox.top);
@@ -265,7 +303,6 @@ public class MyAccessibilityService extends AccessibilityService {
 
     // 遍历节点，找到所有可聚焦的控件
     private void findFocusableNodes(AccessibilityNodeInfo parent,AccessibilityNodeInfo node, List<AccessibilityNodeInfo> focusableNodes,Integer count) {
-        Log.i("nodeclass",">>>>>>>>" + node.getClassName() + ",focusable:" + node.isFocusable());
 
         if (node == null) {
             return;
@@ -290,13 +327,25 @@ public class MyAccessibilityService extends AccessibilityService {
             if (childNode == null){
                 continue;
             }
-
-            if(node.getExtras().getBoolean("collect")){
-                childNode.getExtras().putBoolean("collect", true);
-                childNode.getExtras().putString("text", "");
+            AccessibilityNodeInfoCompat wrap = AccessibilityNodeInfoCompat.wrap(childNode);
+            
+            String childNodeId = childNode.getViewIdResourceName();
+            if(childNodeId == null){
+                childNodeId = "";
             }
+            Log.i("nodeclass",">>>>>>>>" + childNode.getClassName() + ",focusable:" + childNode.isFocusable());
 
-            if(childNode.isFocusable() && !node.isFocusable()){
+//            if(node.getExtras().getBoolean("collect")){
+//                childNode.getExtras().putBoolean("collect", true);
+//                childNode.getExtras().putString("text", node.getExtras().getString("text"));
+//                childNode.getExtras().putString("id", "");
+//            }
+
+//            if(!childNode.getClassName().equals("androidx.recyclerview.widget.RecyclerView")
+//                    && !childNode.getClassName().equals("androidx.viewpager.widget.ViewPager")
+//                    && (childNode.isFocusable() || (childNode.getClassName().equals("android.widget.LinearLayout") && childNode.getChildCount() != 0))
+//                    && (!node.isFocusable() || (node.getClassName().equals("androidx.recyclerview.widget.RecyclerView") || node.getClassName().equals("androidx.viewpager.widget.ViewPager")))){
+            if(childNode.getClassName().equals("android.widget.LinearLayout") && collectable(childNode) || childNode.getClassName().equals("android.view.ViewGroup")){
                 Rect boundsInScreen = new Rect();
                 childNode.getBoundsInScreen(boundsInScreen);
                 int left = boundsInScreen.left;
@@ -312,57 +361,21 @@ public class MyAccessibilityService extends AccessibilityService {
                 }
                 childNode.getExtras().putString("text", text);
                 childNode.getExtras().putBoolean("collect", true);
+                childNode.getExtras().putString("id", "");
                 AccessibilityNodeInfo newNode = new AccessibilityNodeInfo();
                 newNode.setBoundsInScreen(boundsInScreen);
                 findFocusableNodes(node, childNode, focusableNodes,count);
+                if(!"".equals(childNodeId)){
+                    newNode.getExtras().putString("id", childNodeId);
+                }else{
+                    newNode.getExtras().putString("id", childNode.getExtras().getString("id"));
+                }
                 newNode.setText(childNode.getExtras().getString("text"));
                 String tt = newNode.getText().toString();
                 focusableNodes.add(newNode);
+                Log.i("1111",">>>>>>>>>>end " + newNode.getText());
                 continue;
             }
-
-            if (childNode.getClassName() != null && childNode.getClassName().equals("android.widget.Linear1Layout")) {
-                Rect boundsInScreen = new Rect();
-                childNode.getBoundsInScreen(boundsInScreen);
-                int left = boundsInScreen.left;
-                int top = boundsInScreen.top;
-                int right = boundsInScreen.right;
-                int bottom = boundsInScreen.bottom;
-                childNode.getExtras().putString("text", "");
-                childNode.getExtras().putBoolean("collect", true);
-                AccessibilityNodeInfo newNode = new AccessibilityNodeInfo();
-                newNode.setBoundsInScreen(boundsInScreen);
-                findFocusableNodes(node, childNode, focusableNodes,count);
-                newNode.setText(childNode.getExtras().getString("text"));
-                focusableNodes.add(newNode);
-                continue;
-
-//                Log.d("AccessibilityService", "text:"+ childNode.getExtras().getString("text") +"控件坐标：left=" + left + ", top=" + top + ", right=" + right + ", bottom=" + bottom);
-            }
-
-            if (childNode.getClassName() != null && childNode.getClassName().equals("android.widget.Image1View")) {
-                Rect boundsInScreen = new Rect();
-                childNode.getBoundsInScreen(boundsInScreen);
-                int left = boundsInScreen.left;
-                int top = boundsInScreen.top;
-                int right = boundsInScreen.right;
-                int bottom = boundsInScreen.bottom;
-                JSONObject textObj = new JSONObject();
-                childNode.getExtras().putString("text", "");
-                childNode.getExtras().putBoolean("collect", true);
-
-                AccessibilityNodeInfo newNode = new AccessibilityNodeInfo();
-                newNode.setBoundsInScreen(boundsInScreen);
-
-                findFocusableNodes(node, childNode, focusableNodes,count);
-
-                newNode.setText(childNode.getExtras().getString("text"));
-                focusableNodes.add(newNode);
-                continue;
-
-//                Log.d("AccessibilityService", "text:"+ childNode.getExtras().getString("text") +"控件坐标：left=" + left + ", top=" + top + ", right=" + right + ", bottom=" + bottom);
-            }
-
 
             AccessibilityNodeInfo scrollView = findScrollView(childNode);
             Boolean hasScroll = false;
@@ -381,118 +394,133 @@ public class MyAccessibilityService extends AccessibilityService {
 ////                }
 //            }
 
-
             if (childNode.getClassName() != null && childNode.getClassName().equals("android.widget.Switch")) {
                 // 检查节点类名是否为 android.widget.Switch，确保是 Switch 控件
                 boolean isChecked = childNode.isChecked(); // 获取 Switch 控件的状态
+                String text = isChecked ? "开启" : "关闭";
                 Log.d("AccessibilityService", ">>>>>>>  Switch state: " + isChecked);
-                count++;
-                focusableNodes.add(childNode);
-                Rect boundsInScreen = new Rect();
-                childNode.getBoundsInScreen(boundsInScreen);
-                int x = boundsInScreen.left;
-                int y = boundsInScreen.top;
-                Log.d("AccessibilityService", "控件在屏幕上的坐标：x=" + x + ", y=" + y);
-                continue;
-            }
-
-            if(childNode.getText() != null){
-                String text = childNode.getText().toString();
-//                String text = new String(childNode.getText().toString().getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8);
-                Log.d("AccessibilityService", ">>>>>>>  text: " + text);
                 count++;
                 if(node.getExtras().getBoolean("collect")){
                     node.getExtras().putString("text", node.getExtras().getString("text") + "," + text);
+                    node.getExtras().putString("id", node.getExtras().getString("id") + "," + childNodeId);
                     continue;
                 }else{
-                    focusableNodes.add(childNode);
-
+                    //                focusableNodes.add(childNode);
                     Rect boundsInScreen = new Rect();
                     childNode.getBoundsInScreen(boundsInScreen);
                     int left = boundsInScreen.left;
                     int top = boundsInScreen.top;
                     int right = boundsInScreen.right;
                     int bottom = boundsInScreen.bottom;
-                    Boolean focusable = false;
-//                if (childNode.isFocusable() ||
-//                        childNode.isClickable() ||
-//                        childNode.isCheckable() ||
-//                        childNode.isScreenReaderFocusable() ||
-//                        childNode.isContextClickable() ||
-//                        childNode.isScrollable()) {
-//                    focusable = true;
-//                }
-                    if (childNode.isFocusable() || node.isFocusable()) {
-                        focusable = true;
-                    }
-                    Log.d("AccessibilityService", "控件坐标：left=" + left + ", top=" + top + ", right=" + right + ", bottom=" + bottom + ", focusAble=" + focusable );
+                    AccessibilityNodeInfo newNode = new AccessibilityNodeInfo();
+                    newNode.setBoundsInScreen(boundsInScreen);
+                    newNode.setText(text);
+                    newNode.getExtras().putString("id", childNodeId);
+                    focusableNodes.add(newNode);
+                    int x = boundsInScreen.left;
+                    int y = boundsInScreen.top;
+                    Log.d("AccessibilityService", "控件在屏幕上的坐标：x=" + x + ", y=" + y);
+                    continue;
                 }
-
-
-//                Rect boundsInScreen = new Rect();
-//                childNode.getBoundsInScreen(boundsInScreen);
-//                int x = boundsInScreen.left;
-//                int y = boundsInScreen.top;
-//                Log.d("AccessibilityService", "控件在屏幕上的坐标：x=" + x + ", y=" + y);
-//                    continue;
-                // 如果 decodedString 与原始字符串不同，说明可能存在乱码
-
             }
-//            if(childNode.getHintText() != null){
-//                String text = childNode.getHintText().toString();
-//                Log.d("AccessibilityService", ">>>>>>>  text: " + text);
-//                count++;
-//                focusableNodes.add(childNode);
-//                continue;
-//            }
+
+//            if(childNode.getText() != null && (node.getExtras().getBoolean("collect") || childNode.isFocusable())){
+            if(childNode.getText() != null){
+                String text = childNode.getText().toString();
+                if(isErrStr(text)){
+                    continue;
+                }
+                Boolean focusable = false;
+                if (childNode.isFocusable()) {
+                    focusable = true;
+                }
+//                String text = new String(childNode.getText().toString().getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8);
+                Log.d("AccessibilityService", ">>>>>>>  text: " + text + ", focusable: " + focusable + ", " + childNode.isVisibleToUser() + "  " + childNode.isImportantForAccessibility());
+                count++;
+                if(node.getExtras().getBoolean("collect")){
+                    node.getExtras().putString("text", node.getExtras().getString("text") + "," + text);
+                    node.getExtras().putString("id", node.getExtras().getString("id") + "," + childNodeId);
+                    continue;
+                }else{
+                    if(childNode.isFocusable()){
+
+                    }
+                    if((childNode.isFocusable() && node.getClassName().equals("android.widget.LinearLayout"))
+                            || !node.getClassName().equals("android.widget.LinearLayout")){
+
+                    }
+                    childNode.getExtras().putString("id", childNodeId);
+                    focusableNodes.add(childNode);
+                    continue;
+                }
+            }
+
             CharSequence contentDescription = childNode.getContentDescription();
             if(contentDescription != null){
 //                Log.d("AccessibilityService", ">>>>>>>  text: " + contentDescription.toString());
 //                count++;
 //                focusableNodes.add(childNode);
 //                continue;
-
+                String text = contentDescription.toString();
+                Log.d("AccessibilityService", ">>>>>>>  text: " + text);
                 if(node.getExtras().getBoolean("collect")){
                     node.getExtras().putString("text", node.getExtras().getString("text") + "," + contentDescription.toString());
+                    node.getExtras().putString("id", node.getExtras().getString("id") + "," + childNodeId);
                     continue;
+                }else{
+                    //                focusableNodes.add(childNode);
+                    Rect boundsInScreen = new Rect();
+                    childNode.getBoundsInScreen(boundsInScreen);
+                    int left = boundsInScreen.left;
+                    int top = boundsInScreen.top;
+                    int right = boundsInScreen.right;
+                    int bottom = boundsInScreen.bottom;
+                    AccessibilityNodeInfo newNode = new AccessibilityNodeInfo();
+                    newNode.setBoundsInScreen(boundsInScreen);
+                    newNode.setText(text);
+                    newNode.getExtras().putString("id", childNodeId);
+                    focusableNodes.add(newNode);
+                    int x = boundsInScreen.left;
+                    int y = boundsInScreen.top;
+                    Log.d("AccessibilityService", "控件在屏幕上的坐标：x=" + x + ", y=" + y);
+//                    continue;
                 }
             }
-//            CharSequence paneTitle = childNode.getPaneTitle();
-//            if(paneTitle != null){
-//                Log.d("AccessibilityService", ">>>>>>>  text: " + paneTitle.toString());
-//                count++;
-//                focusableNodes.add(childNode);
-//                continue;
+            findFocusableNodes(node, childNode, focusableNodes,count);
+//            if(node.getExtras().getBoolean("collect") && childNode.getExtras().getString("text") != null){
+//                node.getExtras().putString("text", node.getExtras().getString("text") + childNode.getExtras().getString("text"));
+//                node.getExtras().putString("id", node.getExtras().getString("id") + childNode.getExtras().getString("id"));
 //            }
-//
-//            CharSequence stateDescription = childNode.getStateDescription();
-//            if(stateDescription != null){
-//                Log.d("AccessibilityService", ">>>>>>>  text: " + stateDescription.toString());
-//                count++;
-//                focusableNodes.add(childNode);
-//                continue;
-//            }
-//
-//            CharSequence tooltipText = childNode.getTooltipText();
-//            if(tooltipText != null){
-//                Log.d("AccessibilityService", ">>>>>>>  text: " + tooltipText.toString());
-//                count++;
-//                focusableNodes.add(childNode);
-//                continue;
-//            }
+        }
+    }
 
+    public Boolean isErrStr(String str){
+        Boolean res = false;
+//        try{
+//            CharsetDecoder decoder = Charset.forName("UTF-8").newDecoder();
+//            decoder.decode(ByteBuffer.wrap(str.getBytes()));
+//        }catch (Exception e){
+//            res = true;
+//        }
+        return res;
+    }
 
-//            if (childNode.isFocusable()) {
-//                CharSequence text = node.getText();
-//                Log.d("AccessibilityService", ">>>>>>>Focusable control text: " + text.toString());
-//            }
-            if(!hasScroll){
-                findFocusableNodes(node, childNode, focusableNodes,count);
-                if(node.getExtras().getBoolean("collect")){
-                    node.getExtras().putString("text", childNode.getExtras().getString("text"));
-                }
+    public Boolean collectable(AccessibilityNodeInfo node){
+        int childCount = node.getChildCount();
+        if(childCount < 2){
+            return false;
+        }
+        Boolean res = true;
+        for (int i = 0; i < childCount; i++) {
+            AccessibilityNodeInfo childNode = node.getChild(i);
+            if (childNode == null){
+                continue;
+            }
+            if(childNode.isFocusable() || childNode.isClickable() ||childNode.isCheckable()){
+                res=false;
             }
         }
+        return res;
     }
 
     public void info(AccessibilityNodeInfo childNode){
@@ -640,19 +668,21 @@ public class MyAccessibilityService extends AccessibilityService {
         private Integer right;
 
         private String text;
+        private String id;
 
-        public FocusBox(Integer top,Integer bottom,Integer left,Integer right,String text){
+        public FocusBox(Integer top,Integer bottom,Integer left,Integer right,String text,String id){
             this.top = top;
             this.bottom = bottom;
             this.left = left;
             this.right = right;
             this.text = text;
+            this.id = id;
         }
 
         @NonNull
         @Override
         public String toString() {
-            return "text:" + this.text + ", top:" + this.top + ", bottom:" + this.bottom + ", left:" + this.left + ", right:" + this.right;
+            return "id:"+ this.id + ", text:" + this.text + ", top:" + this.top + ", bottom:" + this.bottom + ", left:" + this.left + ", right:" + this.right;
         }
     }
 
