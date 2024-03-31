@@ -6,6 +6,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ActivityInfo;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.Path;
 import android.graphics.Rect;
 import android.os.Bundle;
@@ -52,6 +56,7 @@ public class MyAccessibilityService extends AccessibilityService {
     protected void onServiceConnected() {
         super.onServiceConnected();
         Log.d("4444","Service Connected");
+
         IntentFilter filter = new IntentFilter("FIND_ALL_FOCUS_INFO");
         ActionReceiver accessibilityReceiver = new ActionReceiver(this);
         registerReceiver(accessibilityReceiver, filter,RECEIVER_NOT_EXPORTED);
@@ -80,6 +85,202 @@ public class MyAccessibilityService extends AccessibilityService {
 //        }
     }
 
+    public void getMainActivity(String appName){
+        PackageManager packageManager = getPackageManager();
+        List<ApplicationInfo> installedApplications = packageManager.getInstalledApplications(PackageManager.MATCH_ALL);
+        installedApplications.forEach(e->{
+            String applicationName = packageManager.getApplicationLabel(e).toString();
+            Log.d("AccessibilityService", "当前应用名称：" + applicationName);
+
+            if(appName.equals(applicationName)){
+                String packageName = e.packageName;
+
+                // 创建一个 Intent 对象，用于查询应用程序的 Activity 信息
+                Intent intent = new Intent(Intent.ACTION_MAIN);
+                intent.setPackage(packageName);
+                intent.addCategory(Intent.CATEGORY_LAUNCHER);
+
+
+                // 查询应用程序的 Activity 信息
+                List<ResolveInfo> resolveInfos = packageManager.queryIntentActivities(intent, 0);
+                if(resolveInfos.size() == 0){
+                    return;
+                }else{
+                    String activityName = resolveInfos.get(0).activityInfo.name;
+                    // 打印 Activity 的名称
+                    Log.d("ActivityInfo", "ActivityName: " + activityName);
+//                        String mainActivity = "." + activityName.substring(packageName.length()+1);
+                    Intent msg = new Intent("ACTION_RESULT");
+                    JSONObject res = new JSONObject();
+                    try {
+                        res.put("action","6");
+                        //聚焦框信息
+                        res.put("packageName", packageName);
+                        res.put("mainActivity", activityName);
+                    } catch (JSONException ex) {
+                        throw new RuntimeException(ex);
+                    }
+//        msg.getExtras().putString("res", res.toString());
+                    msg.putExtra("res", res.toString());
+                    msg.setPackage("com.eagle.android");
+                    sendBroadcast(msg);
+                }
+            }
+        });
+    }
+
+    public void focusNext(){
+        AccessibilityNodeInfo parent = getRootInActiveWindow();
+        int childCount = parent.getChildCount();
+        for (int i = 0; i < childCount; i++) {
+            AccessibilityNodeInfo child = parent.getChild(i);
+            AccessibilityNodeInfoCompat node = AccessibilityNodeInfoCompat.wrap(child); // yourNode 是要设置为无障碍焦点的节点
+
+// 设置节点为无障碍焦点
+//            node.setAccessibilityFocused(true); // 设置为 true 表示节点具有无障碍焦点
+
+// 触发 TalkBack 聚焦到节点
+            boolean result = node.performAction(AccessibilityNodeInfoCompat.ACTION_ACCESSIBILITY_FOCUS);
+        }
+    }
+
+    public void getActivity(){
+//        if (event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+//            // 获取当前应用程序所在的包名
+//            String packageName = event.getPackageName().toString();
+//
+//            // 获取当前应用程序所在的 Activity 类名
+//            String className = event.getClassName().toString();
+//
+//            // 输出当前应用程序所在的包名和 Activity 类名
+//            Log.d(TAG, "当前应用程序包名：" + packageName);
+//            Log.d(TAG, "当前应用程序 Activity 类名：" + className);
+//        }
+    }
+
+    public Boolean findFirstFocus(AccessibilityNodeInfo parent){
+        if(parent == null){
+            parent = getRootInActiveWindow();
+        }
+
+        int childCount = parent.getChildCount();
+        for (int i = 0; i < childCount; i++) {
+            AccessibilityNodeInfo child = parent.getChild(i);
+            if(isFocusable(child) || (isTopLevelScrollItem(child) && isSpeakingNode(child))){
+                AccessibilityNodeInfoCompat node = AccessibilityNodeInfoCompat.wrap(child); // yourNode 是要设置为无障碍焦点的节点
+
+                boolean result = node.performAction(AccessibilityNodeInfoCompat.ACTION_ACCESSIBILITY_FOCUS);
+                return true;
+            }
+            if(findFirstFocus(child)){
+                return true;
+            }
+
+        }
+        return false;
+    }
+
+    public void performTwoFingerScrollDownGesture() {
+        // 创建手势描述对象
+        GestureDescription.Builder gestureBuilder = new GestureDescription.Builder();
+
+        // 创建第一个手指的滑动路径
+        Path firstFingerPath = new Path();
+        firstFingerPath.moveTo(800, 800); // 第一个手指起点的坐标
+        firstFingerPath.lineTo(800, 400); // 第一个手指终点的坐标
+
+        // 创建第二个手指的滑动路径
+        Path secondFingerPath = new Path();
+        secondFingerPath.moveTo(800, 1200); // 第二个手指起点的坐标
+        secondFingerPath.lineTo(800, 800); // 第二个手指终点的坐标
+
+        // 创建两个手指的手势描述对象
+        GestureDescription.StrokeDescription firstFingerStroke = new GestureDescription.StrokeDescription(firstFingerPath, 0, 1500);
+        GestureDescription.StrokeDescription secondFingerStroke = new GestureDescription.StrokeDescription(secondFingerPath, 0, 1500);
+
+        // 添加手势操作到手势描述对象中
+        gestureBuilder.addStroke(firstFingerStroke);
+        gestureBuilder.addStroke(secondFingerStroke);
+
+        // 发送手势操作
+        boolean result = dispatchGesture(gestureBuilder.build(), new GestureResultCallback() {
+            @Override
+            public void onCompleted(GestureDescription gestureDescription) {
+                super.onCompleted(gestureDescription);
+                Log.d("TAG", "两个手指向下滑动手势模拟成功");
+            }
+
+            @Override
+            public void onCancelled(GestureDescription gestureDescription) {
+                super.onCancelled(gestureDescription);
+                Log.d("TAG", "两个手指向下滑动手势模拟取消");
+            }
+        }, null);
+
+        // 检查结果
+        if (!result) {
+            Log.d("", "两个手指向下滑动手势模拟失败");
+        }
+    }
+
+
+
+    public void performSwipeGesture() {
+        // 创建手势路径，模拟右滑动作
+        Path swipePath = new Path();
+        swipePath.moveTo(100, 500); // 滑动起点的坐标
+        swipePath.lineTo(600, 500); // 滑动终点的坐标
+
+        // 创建手势描述对象
+        GestureDescription.Builder gestureBuilder = new GestureDescription.Builder();
+        gestureBuilder.addStroke(new GestureDescription.StrokeDescription(swipePath, 0, 100));
+
+        // 发送手势操作
+        boolean result = dispatchGesture(gestureBuilder.build(), new GestureResultCallback() {
+            @Override
+            public void onCompleted(GestureDescription gestureDescription) {
+                super.onCompleted(gestureDescription);
+                Log.d("", "右滑手势模拟成功");
+            }
+
+            @Override
+            public void onCancelled(GestureDescription gestureDescription) {
+                super.onCancelled(gestureDescription);
+                Log.d("", "右滑手势模拟取消");
+            }
+        }, null);
+
+        // 检查结果
+        if (!result) {
+            Log.d("", "右滑手势模拟失败");
+        }
+    }
+
+    public void clickNode(String id){
+        AccessibilityNodeInfo rootNode = getRootInActiveWindow();
+        if (rootNode != null) {
+            List<AccessibilityNodeInfo> targetNodes = rootNode.findAccessibilityNodeInfosByViewId(id);
+            for (AccessibilityNodeInfo node : targetNodes) {
+                if (node.isEnabled() && node.isClickable()) {
+                    node.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                    Intent msg = new Intent("ACTION_RESULT");
+                    JSONObject res = new JSONObject();
+                    try {
+                        res.put("action","7");
+                        //聚焦框信息
+                    } catch (JSONException ex) {
+                        throw new RuntimeException(ex);
+                    }
+//        msg.getExtras().putString("res", res.toString());
+                    msg.putExtra("res", res.toString());
+                    msg.setPackage("com.eagle.android");
+                    sendBroadcast(msg);
+                    return;
+                }
+            }
+        }
+    }
+
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
         int eventType = event.getEventType();
@@ -87,16 +288,73 @@ public class MyAccessibilityService extends AccessibilityService {
 //        Log.i("type",">>>type: "+ Integer.toHexString(eventType));
 //        if (event.getEventType() == AccessibilityEvent.TYPE_VIEW_FOCUSED || event.getEventType() == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED
 //        || event.getWindowChanges() == AccessibilityEvent.WINDOWS_CHANGE_FOCUSED || event.getWindowChanges() == AccessibilityEvent.WINDOWS_CHANGE_ACCESSIBILITY_FOCUSED) {
+        if (event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+            Intent msg = new Intent("ACTION_RESULT");
+            JSONObject res = new JSONObject();
+            try {
+                res.put("action","5");
+                //聚焦框信息
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
+//        msg.getExtras().putString("res", res.toString());
+            msg.putExtra("res", res.toString());
+            msg.setPackage("com.eagle.android");
+            sendBroadcast(msg);
+        }
         if(event.getEventType() == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED){
             AccessibilityNodeInfo nodeInfo = event.getSource();
             if (nodeInfo != null) {
+
                 // 获取焦点控件的相关信息
-                CharSequence text = nodeInfo.getText();
-                CharSequence contentDescription = nodeInfo.getContentDescription();
+//                CharSequence text = nodeInfo.getText();
+//                CharSequence contentDescription = nodeInfo.getContentDescription();
+
+
+                Rect boundsInScreen = new Rect();
+                nodeInfo.getBoundsInScreen(boundsInScreen);
+                int left = boundsInScreen.left;
+                int top = boundsInScreen.top;
+                int bottom = boundsInScreen.bottom;
+                int right = boundsInScreen.right;
+                try{
+                    String id = nodeInfo.getViewIdResourceName();
+                    String text = "";
+                    if(nodeInfo.getText() != null){
+                        text = nodeInfo.getText().toString();
+                    }
+                    if(nodeInfo.getContentDescription() != null){
+                        text = nodeInfo.getContentDescription().toString();
+                    }
+                    JSONObject jsonObject = new JSONObject();
+                    jsonObject.put("className", nodeInfo.getClassName());
+                    jsonObject.put("id", id != null ? id.toString() : "");
+                    jsonObject.put("text", text);
+                    jsonObject.put("left", left);
+                    jsonObject.put("top", top);
+                    jsonObject.put("right", right);
+                    jsonObject.put("bottom", bottom);
+                    Intent msg = new Intent("ACTION_RESULT");
+                    JSONObject res = new JSONObject();
+                    try {
+                        res.put("action","5");
+                        //聚焦框信息
+                        res.put("node", jsonObject);
+                    } catch (JSONException e) {
+                        throw new RuntimeException(e);
+                    }
+//        msg.getExtras().putString("res", res.toString());
+                    msg.putExtra("res", res.toString());
+                    msg.setPackage("com.eagle.android");
+                    sendBroadcast(msg);
+                    Log.d("AccessibilityService", "Focused control: " + text);
+                }catch (Exception ex) {
+                    System.out.println(1);
+                }
+
                 // 可以根据需要获取其他信息，如控件的ID、类名等
                 // 处理获取到的信息，例如打印
                 // 到日志中或者发送到远程服务器
-                Log.d("AccessibilityService", "Focused control: " + text + ", " + contentDescription);
                 nodeInfo.recycle(); // 释放 AccessibilityNodeInfo 对象
             }
         }
@@ -163,6 +421,71 @@ public class MyAccessibilityService extends AccessibilityService {
 //        findFocusableNodes(rootNode2, focusableNodes2,count2);
 //        Log.i("aa", ">>>>>>>22222focus size:" + focusableNodes.size());
         run = false;
+    }
+
+    public void findAllNodes(){
+        List<AccessibilityNodeInfo> nodes = new ArrayList<>();
+        AccessibilityNodeInfo rootNode = getRootInActiveWindow();
+        findNodes(nodes, rootNode);
+
+        JSONArray jsonArray = new JSONArray();
+        nodes.forEach(e->{
+            Rect boundsInScreen = new Rect();
+            e.getBoundsInScreen(boundsInScreen);
+            int left = boundsInScreen.left;
+            int top = boundsInScreen.top;
+            int bottom = boundsInScreen.bottom;
+            int right = boundsInScreen.right;
+            try{
+                String id = e.getViewIdResourceName();
+                String text = "";
+                if(e.getText() != null){
+                    text = e.getText().toString();
+                }
+                if(e.getContentDescription() != null){
+                    text = e.getContentDescription().toString();
+                }
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("className", e.getClassName());
+                jsonObject.put("id", id != null ? id.toString() : "");
+                jsonObject.put("text", text);
+                jsonObject.put("left", left);
+                jsonObject.put("top", top);
+                jsonObject.put("right", right);
+                jsonObject.put("bottom", bottom);
+                jsonArray.put(jsonObject);
+                Log.d("AccessibilityService", "className: "+ e.getClassName() + "text:"+ text +", 控件坐标：left=" + left + ", top=" + top + ", right=" + right + ", bottom=" + bottom);
+            }catch (Exception ex) {
+                System.out.println(1);
+            }
+
+        });
+
+
+        Intent msg = new Intent("ACTION_RESULT");
+        JSONObject res = new JSONObject();
+        try {
+            res.put("action","2");
+            //聚焦框信息
+            res.put("list", jsonArray);
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+//        msg.getExtras().putString("res", res.toString());
+        msg.putExtra("res", res.toString());
+        msg.setPackage("com.eagle.android");
+        sendBroadcast(msg);
+    }
+
+    public void findNodes(List<AccessibilityNodeInfo> nodes, AccessibilityNodeInfo parent){
+        int childCount = parent.getChildCount();
+        for (int i = 0; i < childCount; i++) {
+            AccessibilityNodeInfo child = parent.getChild(i);
+            nodes.add(child);
+
+
+            findNodes(nodes, child);
+        }
     }
 
     public void findAllFoucs(){
@@ -332,6 +655,7 @@ public class MyAccessibilityService extends AccessibilityService {
             return true;
         }
         AccessibilityNodeInfoCompat wrap = AccessibilityNodeInfoCompat.wrap(node);
+
         if(wrap.isScreenReaderFocusable()){
             return true;
         }
@@ -425,7 +749,6 @@ public class MyAccessibilityService extends AccessibilityService {
             if (childNode == null){
                 continue;
             }
-
             String childNodeId = childNode.getViewIdResourceName();
             if(childNodeId == null){
                 childNodeId = "";

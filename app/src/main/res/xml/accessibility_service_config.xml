@@ -5,4 +5,7 @@
     android:accessibilityEventTypes="typeAllMask"
     android:accessibilityFlags="flagDefault|flagReportViewIds"
     android:notificationTimeout="100"
+    android:canPerformGestures="true"
+    android:canRequestTouchExplorationMode = "true"
+    android:canRequestFingerprintGestures="true"
     android:canRetrieveWindowContent="true" />

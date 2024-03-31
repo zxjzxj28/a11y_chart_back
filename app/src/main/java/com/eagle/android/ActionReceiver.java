@@ -16,13 +16,34 @@ public class ActionReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        String action = intent.getExtras().getString("action");
-        if(action.equals("1")){//查找聚焦框
-            this.accessibilityService.findAllFoucs();
-        }else{//滚动屏幕
-            this.accessibilityService.scoll();
+        try{
+            String action = intent.getExtras().getString("action");
+            String extra = intent.getExtras().getString("extra");
+            if(action.equals("1")){//查找聚焦框
+                this.accessibilityService.findAllFoucs();
+            }
+            if(action.equals("2")) { //节点布局
+                this.accessibilityService.findAllNodes();
+            }
+            if(action.equals("3")) { //右滑
+                this.accessibilityService.performSwipeGesture();
+            }
+            if(action.equals("4")) { //下滚动
+                this.accessibilityService.performTwoFingerScrollDownGesture();
+            }
+            if(action.equals("5")) { //第一个focus节点
+                this.accessibilityService.findFirstFocus(null);
+            }
+            if(action.equals("6")) { //找app入口
+                this.accessibilityService.getMainActivity(extra);
+            }
+            if(action.equals("7")) { //点击进入
+                this.accessibilityService.clickNode(extra);
+            }
+            Log.i("action",">>>>>>>receive action");
+        }catch (Exception e){
+            Log.e("",e.toString());
         }
-        Log.i("action",">>>>>>>receive action");
 
     }
 }

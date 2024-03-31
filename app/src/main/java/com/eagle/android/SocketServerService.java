@@ -73,6 +73,7 @@ public class SocketServerService extends IntentService {
                             // 创建广播意图并发送
                             Intent msg = new Intent("FIND_ALL_FOCUS_INFO");
                             msg.putExtra("action", jsonObject.getString("action"));
+                            msg.putExtra("extra", jsonObject.getString("extra"));
                             sendBroadcast(msg);
                         }
 
@@ -108,6 +109,9 @@ public class SocketServerService extends IntentService {
             new AsyncTask<Void, Void, String>() {
                 @Override
                 protected String doInBackground(Void... params) {
+                    if(out == null || res == null){
+                        return "";
+                    }
                     out.println(res.toString());
                     Log.i("res",res.toString());
                     out.flush();
