@@ -40,6 +40,9 @@ public class ActionReceiver extends BroadcastReceiver {
             if(action.equals("7")) { //点击进入
                 this.accessibilityService.clickNode(extra);
             }
+            if(action.equals("8")) { //回到顶部
+                this.accessibilityService.backTop();
+            }
             Log.i("action",">>>>>>>receive action");
         }catch (Exception e){
             Log.e("",e.toString());

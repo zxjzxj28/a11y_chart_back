@@ -195,8 +195,8 @@ public class MyAccessibilityService extends AccessibilityService {
         secondFingerPath.lineTo(800, 800); // 第二个手指终点的坐标
 
         // 创建两个手指的手势描述对象
-        GestureDescription.StrokeDescription firstFingerStroke = new GestureDescription.StrokeDescription(firstFingerPath, 0, 1500);
-        GestureDescription.StrokeDescription secondFingerStroke = new GestureDescription.StrokeDescription(secondFingerPath, 0, 1500);
+        GestureDescription.StrokeDescription firstFingerStroke = new GestureDescription.StrokeDescription(firstFingerPath, 0, 2000);
+        GestureDescription.StrokeDescription secondFingerStroke = new GestureDescription.StrokeDescription(secondFingerPath, 0, 2000);
 
         // 添加手势操作到手势描述对象中
         gestureBuilder.addStroke(firstFingerStroke);
@@ -223,7 +223,48 @@ public class MyAccessibilityService extends AccessibilityService {
         }
     }
 
+    public void backTop(){
+        // 创建手势描述对象
+        GestureDescription.Builder gestureBuilder = new GestureDescription.Builder();
 
+        // 创建第一个手指的滑动路径
+        Path firstFingerPath = new Path();
+        firstFingerPath.moveTo(800, 300); // 第一个手指起点的坐标
+        firstFingerPath.lineTo(800, 1200); // 第一个手指终点的坐标
+
+        // 创建第二个手指的滑动路径
+        Path secondFingerPath = new Path();
+        secondFingerPath.moveTo(800, 500); // 第二个手指起点的坐标
+        secondFingerPath.lineTo(800, 1000); // 第二个手指终点的坐标
+
+        // 创建两个手指的手势描述对象
+        GestureDescription.StrokeDescription firstFingerStroke = new GestureDescription.StrokeDescription(firstFingerPath, 0, 500);
+        GestureDescription.StrokeDescription secondFingerStroke = new GestureDescription.StrokeDescription(secondFingerPath, 0, 500);
+
+        // 添加手势操作到手势描述对象中
+        gestureBuilder.addStroke(firstFingerStroke);
+        gestureBuilder.addStroke(secondFingerStroke);
+
+        // 发送手势操作
+        boolean result = dispatchGesture(gestureBuilder.build(), new GestureResultCallback() {
+            @Override
+            public void onCompleted(GestureDescription gestureDescription) {
+                super.onCompleted(gestureDescription);
+                Log.d("TAG", "backtop滑动手势模拟成功");
+            }
+
+            @Override
+            public void onCancelled(GestureDescription gestureDescription) {
+                super.onCancelled(gestureDescription);
+                Log.d("TAG", "backtop手势模拟取消");
+            }
+        }, null);
+
+        // 检查结果
+        if (!result) {
+            Log.d("", "backtop手势模拟失败");
+        }
+    }
 
     public void performSwipeGesture() {
         // 创建手势路径，模拟右滑动作
@@ -262,20 +303,20 @@ public class MyAccessibilityService extends AccessibilityService {
             List<AccessibilityNodeInfo> targetNodes = rootNode.findAccessibilityNodeInfosByViewId(id);
             for (AccessibilityNodeInfo node : targetNodes) {
                 if (node.isEnabled() && node.isClickable()) {
-                    node.performAction(AccessibilityNodeInfo.ACTION_CLICK);
-                    Intent msg = new Intent("ACTION_RESULT");
-                    JSONObject res = new JSONObject();
-                    try {
-                        res.put("action","7");
-                        //聚焦框信息
-                    } catch (JSONException ex) {
-                        throw new RuntimeException(ex);
-                    }
-//        msg.getExtras().putString("res", res.toString());
-                    msg.putExtra("res", res.toString());
-                    msg.setPackage("com.eagle.android");
-                    sendBroadcast(msg);
-                    return;
+                    node.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD);
+//                    Intent msg = new Intent("ACTION_RESULT");
+//                    JSONObject res = new JSONObject();
+//                    try {
+//                        res.put("action","7");
+//                        //聚焦框信息
+//                    } catch (JSONException ex) {
+//                        throw new RuntimeException(ex);
+//                    }
+////        msg.getExtras().putString("res", res.toString());
+//                    msg.putExtra("res", res.toString());
+//                    msg.setPackage("com.eagle.android");
+//                    sendBroadcast(msg);
+//                    return;
                 }
             }
         }
@@ -288,19 +329,56 @@ public class MyAccessibilityService extends AccessibilityService {
 //        Log.i("type",">>>type: "+ Integer.toHexString(eventType));
 //        if (event.getEventType() == AccessibilityEvent.TYPE_VIEW_FOCUSED || event.getEventType() == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED
 //        || event.getWindowChanges() == AccessibilityEvent.WINDOWS_CHANGE_FOCUSED || event.getWindowChanges() == AccessibilityEvent.WINDOWS_CHANGE_ACCESSIBILITY_FOCUSED) {
+        if (eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
+            AccessibilityNodeInfo source = event.getSource();
+
+            if (source != null) {
+                int scrollX = event.getScrollX(); // 获取水平滚动距离
+                int scrollY = event.getScrollY(); // 获取垂直滚动距离
+                // 处理滚动事件和滚动距离
+                // ...
+                source.recycle(); // 记得回收 AccessibilityNodeInfo 对象
+                JSONObject res = new JSONObject();
+                try {
+                    res.put("action","8");
+                    res.put("scrollY", scrollY);
+                    //聚焦框信息
+                } catch (JSONException e) {
+                    throw new RuntimeException(e);
+                }
+                Intent msg = new Intent("ACTION_RESULT");
+                msg.putExtra("res", res.toString());
+                msg.setPackage("com.eagle.android");
+                sendBroadcast(msg);
+            }
+        }
         if (event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+//            Intent msg = new Intent("ACTION_RESULT");
+//            JSONObject res = new JSONObject();
+//            try {
+//                res.put("action","5");
+//                //聚焦框信息
+//            } catch (JSONException e) {
+//                throw new RuntimeException(e);
+//            }
+////        msg.getExtras().putString("res", res.toString());
+//            msg.putExtra("res", res.toString());
+//            msg.setPackage("com.eagle.android");
+//            sendBroadcast(msg);
+
             Intent msg = new Intent("ACTION_RESULT");
             JSONObject res = new JSONObject();
             try {
-                res.put("action","5");
+                res.put("action","7");
                 //聚焦框信息
-            } catch (JSONException e) {
-                throw new RuntimeException(e);
+            } catch (JSONException ex) {
+                throw new RuntimeException(ex);
             }
 //        msg.getExtras().putString("res", res.toString());
             msg.putExtra("res", res.toString());
             msg.setPackage("com.eagle.android");
             sendBroadcast(msg);
+            return;
         }
         if(event.getEventType() == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED){
             AccessibilityNodeInfo nodeInfo = event.getSource();
@@ -433,6 +511,8 @@ public class MyAccessibilityService extends AccessibilityService {
             Rect boundsInScreen = new Rect();
             e.getBoundsInScreen(boundsInScreen);
             int left = boundsInScreen.left;
+
+
             int top = boundsInScreen.top;
             int bottom = boundsInScreen.bottom;
             int right = boundsInScreen.right;
@@ -647,6 +727,9 @@ public class MyAccessibilityService extends AccessibilityService {
         }
         if(node.getClassName().equals("androidx.recyclerview.widget.RecyclerView")){
             return false;
+        }
+        if(node.getContentDescription() != null){
+            return true;
         }
         if(node.getParent().getClassName().equals("android.widget.FrameLayout") && node.getText() != null){
             return true;
