@@ -47,6 +47,5 @@ public class ActionReceiver extends BroadcastReceiver {
         }catch (Exception e){
             Log.e("",e.toString());
         }
-
     }
 }
