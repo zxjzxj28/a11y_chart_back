@@ -162,20 +162,28 @@ public class MyAccessibilityService extends AccessibilityService {
         if(parent == null){
             parent = getRootInActiveWindow();
         }
+        try{
+            int childCount = parent.getChildCount();
+            for (int i = 0; i < childCount; i++) {
+                AccessibilityNodeInfo child = parent.getChild(i);
+                if(isFocusable(child) || (isTopLevelScrollItem(child) && isSpeakingNode(child))){
+                    AccessibilityNodeInfoCompat node = AccessibilityNodeInfoCompat.wrap(child); // yourNode 是要设置为无障碍焦点的节点
 
-        int childCount = parent.getChildCount();
-        for (int i = 0; i < childCount; i++) {
-            AccessibilityNodeInfo child = parent.getChild(i);
-            if(isFocusable(child) || (isTopLevelScrollItem(child) && isSpeakingNode(child))){
-                AccessibilityNodeInfoCompat node = AccessibilityNodeInfoCompat.wrap(child); // yourNode 是要设置为无障碍焦点的节点
+                    boolean result = node.performAction(AccessibilityNodeInfoCompat.ACTION_ACCESSIBILITY_FOCUS);
+                    child.recycle();
+                    return true;
+                }
+                if(findFirstFocus(child)){
+                    return true;
+                }
 
-                boolean result = node.performAction(AccessibilityNodeInfoCompat.ACTION_ACCESSIBILITY_FOCUS);
-                return true;
             }
-            if(findFirstFocus(child)){
-                return true;
-            }
+        }catch (Exception e){
 
+        }finally {
+            if(parent != null){
+                parent.recycle();
+            }
         }
         return false;
     }
@@ -318,41 +326,44 @@ public class MyAccessibilityService extends AccessibilityService {
 //                    sendBroadcast(msg);
 //                    return;
                 }
+                node.recycle();
             }
+            rootNode.recycle();
         }
     }
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
-        int eventType = event.getEventType();
+        try{
+            int eventType = event.getEventType();
 //        Log.i("type",">>>type: "+ eventType);
 //        Log.i("type",">>>type: "+ Integer.toHexString(eventType));
 //        if (event.getEventType() == AccessibilityEvent.TYPE_VIEW_FOCUSED || event.getEventType() == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED
 //        || event.getWindowChanges() == AccessibilityEvent.WINDOWS_CHANGE_FOCUSED || event.getWindowChanges() == AccessibilityEvent.WINDOWS_CHANGE_ACCESSIBILITY_FOCUSED) {
-        if (eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
-            AccessibilityNodeInfo source = event.getSource();
+            if (eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
+                AccessibilityNodeInfo source = event.getSource();
 
-            if (source != null) {
-                int scrollX = event.getScrollX(); // 获取水平滚动距离
-                int scrollY = event.getScrollY(); // 获取垂直滚动距离
-                // 处理滚动事件和滚动距离
-                // ...
-                source.recycle(); // 记得回收 AccessibilityNodeInfo 对象
-                JSONObject res = new JSONObject();
-                try {
-                    res.put("action","8");
-                    res.put("scrollY", scrollY);
-                    //聚焦框信息
-                } catch (JSONException e) {
-                    throw new RuntimeException(e);
+                if (source != null) {
+                    int scrollX = event.getScrollX(); // 获取水平滚动距离
+                    int scrollY = event.getScrollY(); // 获取垂直滚动距离
+                    // 处理滚动事件和滚动距离
+                    // ...
+                    source.recycle(); // 记得回收 AccessibilityNodeInfo 对象
+                    JSONObject res = new JSONObject();
+                    try {
+                        res.put("action","8");
+                        res.put("scrollY", scrollY);
+                        //聚焦框信息
+                    } catch (JSONException e) {
+                        throw new RuntimeException(e);
+                    }
+                    Intent msg = new Intent("ACTION_RESULT");
+                    msg.putExtra("res", res.toString());
+                    msg.setPackage("com.eagle.android");
+                    sendBroadcast(msg);
                 }
-                Intent msg = new Intent("ACTION_RESULT");
-                msg.putExtra("res", res.toString());
-                msg.setPackage("com.eagle.android");
-                sendBroadcast(msg);
             }
-        }
-        if (event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+            if (event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
 //            Intent msg = new Intent("ACTION_RESULT");
 //            JSONObject res = new JSONObject();
 //            try {
@@ -366,79 +377,112 @@ public class MyAccessibilityService extends AccessibilityService {
 //            msg.setPackage("com.eagle.android");
 //            sendBroadcast(msg);
 
-            Intent msg = new Intent("ACTION_RESULT");
-            JSONObject res = new JSONObject();
-            try {
-                res.put("action","7");
-                //聚焦框信息
-            } catch (JSONException ex) {
-                throw new RuntimeException(ex);
-            }
+                Intent msg = new Intent("ACTION_RESULT");
+                JSONObject res = new JSONObject();
+                try {
+                    res.put("action","7");
+                    //聚焦框信息
+                } catch (JSONException ex) {
+                    throw new RuntimeException(ex);
+                }
 //        msg.getExtras().putString("res", res.toString());
-            msg.putExtra("res", res.toString());
-            msg.setPackage("com.eagle.android");
-            sendBroadcast(msg);
-            return;
-        }
-        if(event.getEventType() == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED){
-            AccessibilityNodeInfo nodeInfo = event.getSource();
-            if (nodeInfo != null) {
+                msg.putExtra("res", res.toString());
+                msg.setPackage("com.eagle.android");
+                sendBroadcast(msg);
+                return;
+            }
+            if(event.getEventType() == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED){
+                AccessibilityNodeInfo nodeInfo = event.getSource();
+                if (nodeInfo != null) {
 
-                // 获取焦点控件的相关信息
+                    // 获取焦点控件的相关信息
 //                CharSequence text = nodeInfo.getText();
 //                CharSequence contentDescription = nodeInfo.getContentDescription();
 
 
-                Rect boundsInScreen = new Rect();
-                nodeInfo.getBoundsInScreen(boundsInScreen);
-                int left = boundsInScreen.left;
-                int top = boundsInScreen.top;
-                int bottom = boundsInScreen.bottom;
-                int right = boundsInScreen.right;
-                try{
-                    String id = nodeInfo.getViewIdResourceName();
-                    String text = "";
-                    if(nodeInfo.getText() != null){
-                        text = nodeInfo.getText().toString();
-                    }
-                    if(nodeInfo.getContentDescription() != null){
-                        text = nodeInfo.getContentDescription().toString();
-                    }
-                    JSONObject jsonObject = new JSONObject();
-                    jsonObject.put("className", nodeInfo.getClassName());
-                    jsonObject.put("id", id != null ? id.toString() : "");
-                    jsonObject.put("text", text);
-                    jsonObject.put("left", left);
-                    jsonObject.put("top", top);
-                    jsonObject.put("right", right);
-                    jsonObject.put("bottom", bottom);
-                    Intent msg = new Intent("ACTION_RESULT");
-                    JSONObject res = new JSONObject();
-                    try {
-                        res.put("action","5");
-                        //聚焦框信息
-                        res.put("node", jsonObject);
-                    } catch (JSONException e) {
-                        throw new RuntimeException(e);
-                    }
-//        msg.getExtras().putString("res", res.toString());
-                    msg.putExtra("res", res.toString());
-                    msg.setPackage("com.eagle.android");
-                    sendBroadcast(msg);
-                    Log.d("AccessibilityService", "Focused control: " + text);
-                }catch (Exception ex) {
-                    System.out.println(1);
-                }
+                    Rect boundsInScreen = new Rect();
+                    nodeInfo.getBoundsInScreen(boundsInScreen);
+                    int left = boundsInScreen.left;
+                    int top = boundsInScreen.top;
+                    int bottom = boundsInScreen.bottom;
+                    int right = boundsInScreen.right;
+                    try{
+                        String id = nodeInfo.getViewIdResourceName();
+                        StringBuilder builder = new StringBuilder();
+                        if(nodeInfo.isCheckable()){
+                            if(nodeInfo.isChecked()){
+                                if(nodeInfo.getClassName().equals("android.widget.Switch")){
+                                    builder.append("开启");
+                                }else{
+                                    builder.append("已选中 ");
+                                }
+                            }else{
+                                if(nodeInfo.getClassName().equals("android.widget.Switch")){
+                                    builder.append("关闭");
+                                }else{
+                                    builder.append("未选中 ");
+                                }
+                            }
+                        }
+                        if(nodeInfo.isSelected()){
+                            if(nodeInfo.isSelected()){
+                                builder.append("已选中,");
+                            }
+                        }
+                        for (int i=0; i<event.getText().size();i++){
+                            Log.i("text11", event.getText().get(i).toString());
+                            if(event.getText().get(i) != null &&  !"".equals(event.getText().get(i))){
+                                builder.append(event.getText().get(i).toString().replace("\n", ""));
+                                builder.append(",");
+                            }
+                        }
+                        if (builder.length() > 0 && builder.charAt(builder.length() - 1) == ',') {
+                            builder.deleteCharAt(builder.length() - 1);
+                        }
 
-                // 可以根据需要获取其他信息，如控件的ID、类名等
-                // 处理获取到的信息，例如打印
-                // 到日志中或者发送到远程服务器
-                nodeInfo.recycle(); // 释放 AccessibilityNodeInfo 对象
+
+//                    String text = "";
+//                    if(nodeInfo.getText() != null){
+//                        text = nodeInfo.getText().toString();
+//                    }
+//                    if(nodeInfo.getContentDescription() != null){
+//                        text = nodeInfo.getContentDescription().toString();
+//                    }
+                        JSONObject jsonObject = new JSONObject();
+                        jsonObject.put("className", nodeInfo.getClassName());
+                        jsonObject.put("id", id != null ? id.toString() : "");
+                        jsonObject.put("text", builder.toString());
+                        jsonObject.put("left", left);
+                        jsonObject.put("top", top);
+                        jsonObject.put("right", right);
+                        jsonObject.put("bottom", bottom);
+                        Intent msg = new Intent("ACTION_RESULT");
+                        JSONObject res = new JSONObject();
+                        try {
+                            res.put("action","5");
+                            //聚焦框信息
+                            res.put("node", jsonObject);
+                        } catch (JSONException e) {
+                            throw new RuntimeException(e);
+                        }
+//        msg.getExtras().putString("res", res.toString());
+                        msg.putExtra("res", res.toString());
+                        msg.setPackage("com.eagle.android");
+                        sendBroadcast(msg);
+                        Log.d("AccessibilityService", "Focused control: " + builder.toString());
+                    }catch (Exception ex) {
+                        System.out.println(1);
+                    }
+
+                    // 可以根据需要获取其他信息，如控件的ID、类名等
+                    // 处理获取到的信息，例如打印
+                    // 到日志中或者发送到远程服务器
+                    nodeInfo.recycle(); // 释放 AccessibilityNodeInfo 对象
+                }
             }
-        }
-        if(1==1){
-            return;
-        }
+//            if(1==1){
+//                return;
+//            }
 
 
 //        if(eventType != AccessibilityEvent.TYPE_VIEW_LONG_CLICKED){
@@ -447,12 +491,12 @@ public class MyAccessibilityService extends AccessibilityService {
 //        if(run){
 //            return;
 //        }
-        run = true;
-        Log.i("3333","333333");
-        AccessibilityNodeInfo rootNode = getRootInActiveWindow();
-        if(rootNode == null){
-            return;
-        }
+//            run = true;
+//            Log.i("3333","333333");
+//            AccessibilityNodeInfo rootNode = getRootInActiveWindow();
+//            if(rootNode == null){
+//                return;
+//            }
 //        int childCount = rootNode.getChildCount();
 //        for (int i = 0; i < childCount; i++) {
 //            AccessibilityNodeInfo childNode = rootNode.getChild(i);
@@ -472,10 +516,10 @@ public class MyAccessibilityService extends AccessibilityService {
 //        CharSequence contentDescription = rootNode.getContentDescription();
 //        Log.d("AccessibilityService", ">>>>>>>root2222  text: " + contentDescription);
 //        // 获取当前活动页面的所有可聚焦控件
-        List<AccessibilityNodeInfo> focusableNodes = new ArrayList<>();
-        Integer count = 0;
-//        findFocusableNodes(null, rootNode, focusableNodes,count);
-        Log.i("aa", ">>>>>>>focus size:" + focusableNodes.size());
+//            List<AccessibilityNodeInfo> focusableNodes = new ArrayList<>();
+//            Integer count = 0;
+////        findFocusableNodes(null, rootNode, focusableNodes,count);
+//            Log.i("aa", ">>>>>>>focus size:" + focusableNodes.size());
 //        // 处理可聚焦控件
 //        for (AccessibilityNodeInfo node : focusableNodes) {
 //            // 处理每个可聚焦控件
@@ -498,14 +542,23 @@ public class MyAccessibilityService extends AccessibilityService {
 //        Integer count2 = 0;
 //        findFocusableNodes(rootNode2, focusableNodes2,count2);
 //        Log.i("aa", ">>>>>>>22222focus size:" + focusableNodes.size());
-        run = false;
+//            run = false;
+        }catch (Exception e){
+
+        }finally {
+            try{
+                event.recycle();
+            }catch (Exception e){
+
+            }
+        }
     }
 
     public void findAllNodes(){
         List<AccessibilityNodeInfo> nodes = new ArrayList<>();
         AccessibilityNodeInfo rootNode = getRootInActiveWindow();
         findNodes(nodes, rootNode);
-
+        rootNode.recycle();
         JSONArray jsonArray = new JSONArray();
         nodes.forEach(e->{
             Rect boundsInScreen = new Rect();
@@ -534,6 +587,7 @@ public class MyAccessibilityService extends AccessibilityService {
                 jsonObject.put("right", right);
                 jsonObject.put("bottom", bottom);
                 jsonArray.put(jsonObject);
+                e.recycle();
                 Log.d("AccessibilityService", "className: "+ e.getClassName() + "text:"+ text +", 控件坐标：left=" + left + ", top=" + top + ", right=" + right + ", bottom=" + bottom);
             }catch (Exception ex) {
                 System.out.println(1);
@@ -589,11 +643,13 @@ public class MyAccessibilityService extends AccessibilityService {
             if(childNode.getClassName().equals("androidx.recyclerview.widget.RecyclerView")){
                 recyclerViewIndex = i;
             }
+            childNode.recycle();
         }
 
         List<AccessibilityNodeInfo> focusableNodes = new ArrayList<>();
         Integer count = 0;
         findFocusableNodes(null, rootNode, focusableNodes,count);
+        rootNode.refresh();
         Log.i("aa", ">>>>>>>focus size:" + focusableNodes.size());
         List<FocusBox> list = new ArrayList<>();
         focusableNodes.forEach(e->{
@@ -872,7 +928,7 @@ public class MyAccessibilityService extends AccessibilityService {
                     }
                     newNode.setText(childNode.getExtras().getString("text"));
                     String tt = newNode.getText().toString();
-
+                    childNode.recycle();
                     Log.i("1111",">>>>>>>>>>end " + newNode.getText());
                     continue;
                 }else{

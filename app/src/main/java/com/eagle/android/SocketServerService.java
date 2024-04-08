@@ -103,27 +103,30 @@ public class SocketServerService extends IntentService {
 
     public void sendRes2Client(JSONObject res){
         if(res != null){
-            Log.i("res",res.toString());
+//            Log.i("res",res.toString());
 
             // 使用 AsyncTask 进行网络请求
-            new AsyncTask<Void, Void, String>() {
-                @Override
-                protected String doInBackground(Void... params) {
-                    if(out == null || res == null){
+            try{
+                new AsyncTask<Void, Void, String>() {
+                    @Override
+                    protected String doInBackground(Void... params) {
+                        if(out == null || res == null){
+                            return "";
+                        }
+                        out.println(res.toString());
+//                    Log.i("res",res.toString());
+//                    out.flush();
                         return "";
                     }
-                    out.println(res.toString());
-                    Log.i("res",res.toString());
-                    out.flush();
-                    return "";
-                }
 
-                @Override
-                protected void onPostExecute(String result) {
-                    // 在这里更新UI
-                }
-            }.execute();
+                    @Override
+                    protected void onPostExecute(String result) {
+                        // 在这里更新UI
+                    }
+                }.execute();
+            }catch (Exception e){
 
+            }
         }
     }
 

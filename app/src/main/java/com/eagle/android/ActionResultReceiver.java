@@ -24,7 +24,8 @@ public class ActionResultReceiver extends BroadcastReceiver {
             JSONObject res = new JSONObject(resString);
             this.socketServerService.sendRes2Client(res);
         } catch (JSONException e) {
-            throw new RuntimeException(e);
+            Log.e("",e.getMessage());
+//            throw new RuntimeException(e);
         }
         Log.i("action",">>>>>>>receive action result");
 
