@@ -26,13 +26,23 @@ public class SocketServerService extends IntentService {
     public SocketServerService(String name) {
         super(name);
     }
-
+    public static ActionResultReceiver actionResultReceiver;
     @Override
     public void onCreate() {
         super.onCreate();
         IntentFilter filter = new IntentFilter("ACTION_RESULT");
-        ActionResultReceiver actionResultReceiver = new ActionResultReceiver(this);
-        registerReceiver(actionResultReceiver, filter,RECEIVER_NOT_EXPORTED);
+        if(actionResultReceiver == null){
+            actionResultReceiver = new ActionResultReceiver(this);
+            registerReceiver(actionResultReceiver, filter,RECEIVER_NOT_EXPORTED);
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if(actionResultReceiver != null){
+            unregisterReceiver(actionResultReceiver);
+        }
     }
 
     @Override
@@ -114,7 +124,7 @@ public class SocketServerService extends IntentService {
                             return "";
                         }
                         out.println(res.toString());
-//                    Log.i("res",res.toString());
+                    Log.i("socket-msg",res.toString());
 //                    out.flush();
                         return "";
                     }

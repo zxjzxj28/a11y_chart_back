@@ -8,4 +8,5 @@
     android:canPerformGestures="true"
     android:canRequestTouchExplorationMode = "true"
     android:canRequestFingerprintGestures="true"
+    android:accessibilityFeedbackType="feedbackGeneric"
     android:canRetrieveWindowContent="true" />

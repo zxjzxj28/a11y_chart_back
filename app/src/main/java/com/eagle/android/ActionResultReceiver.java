@@ -19,6 +19,9 @@ public class ActionResultReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        if(socketServerService == null){
+            return;
+        }
         String resString = intent.getExtras().getString("res");
         try {
             JSONObject res = new JSONObject(resString);
@@ -27,7 +30,7 @@ public class ActionResultReceiver extends BroadcastReceiver {
             Log.e("",e.getMessage());
 //            throw new RuntimeException(e);
         }
-        Log.i("action",">>>>>>>receive action result");
+        Log.i("action",">>>>>>>receive action result" + resString);
 
     }
 }

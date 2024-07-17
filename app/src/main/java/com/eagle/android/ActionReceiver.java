@@ -43,7 +43,11 @@ public class ActionReceiver extends BroadcastReceiver {
             if(action.equals("8")) { //回到顶部
                 this.accessibilityService.backTop();
             }
-            Log.i("action",">>>>>>>receive action");
+            if(action.equals("9")) { //按坐标 聚焦控件z
+                this.accessibilityService.touchNode(extra);
+            }
+
+            Log.i("action",">>>>>>>receive action:" + action );
         }catch (Exception e){
             Log.e("",e.toString());
         }
