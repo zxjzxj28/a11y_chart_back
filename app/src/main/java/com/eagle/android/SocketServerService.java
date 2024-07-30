@@ -73,22 +73,26 @@ public class SocketServerService extends IntentService {
                                 // 如果客户端关闭连接，则退出循环等待新的连接
                                 break;
                             }
-                            Log.i("socket", message);
+                            try{
+                                Log.i("socket", message);
 
-                            // 解析消息并处理
-                            JSONObject jsonObject = new JSONObject(message);
-                            String action = jsonObject.getString("action");
-                            Log.i("socket", jsonObject.getString("action"));
+                                // 解析消息并处理
+                                JSONObject jsonObject = new JSONObject(message);
+                                String action = jsonObject.getString("action");
+                                Log.i("socket", jsonObject.getString("action"));
 
-                            // 创建广播意图并发送
-                            Intent msg = new Intent("FIND_ALL_FOCUS_INFO");
-                            msg.putExtra("action", jsonObject.getString("action"));
-                            msg.putExtra("extra", jsonObject.getString("extra"));
-                            sendBroadcast(msg);
+                                // 创建广播意图并发送
+                                Intent msg = new Intent("FIND_ALL_FOCUS_INFO");
+                                msg.putExtra("action", jsonObject.getString("action"));
+                                msg.putExtra("extra", jsonObject.getString("extra"));
+                                sendBroadcast(msg);
+                            }catch (Exception e){
+                                Log.e("recv action err","",e);
+                            }
                         }
-
-
                     }catch (Exception e){
+                        Log.e("socketerr","",e);
+                    }finally {
                         // 关闭流和连接
                         in.close();
                         out.close();
@@ -120,12 +124,16 @@ public class SocketServerService extends IntentService {
                 new AsyncTask<Void, Void, String>() {
                     @Override
                     protected String doInBackground(Void... params) {
-                        if(out == null || res == null){
-                            return "";
-                        }
-                        out.println(res.toString());
-                    Log.i("socket-msg",res.toString());
+                        try{
+                            if(out == null || res == null){
+                                return "";
+                            }
+                            out.println(res.toString());
+                            Log.i("socket-msg",res.toString());
 //                    out.flush();
+                        }catch (Exception ex){
+                            Log.e("socketwerr", ex.getStackTrace().toString());
+                        }
                         return "";
                     }
 

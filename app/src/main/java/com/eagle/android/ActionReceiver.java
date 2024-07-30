@@ -46,7 +46,9 @@ public class ActionReceiver extends BroadcastReceiver {
             if(action.equals("9")) { //按坐标 聚焦控件z
                 this.accessibilityService.touchNode(extra);
             }
-
+            if(action.equals("10")) { //按id查找并关闭按钮
+                this.accessibilityService.clickByIdOrText(extra, null);
+            }
             Log.i("action",">>>>>>>receive action:" + action );
         }catch (Exception e){
             Log.e("",e.toString());

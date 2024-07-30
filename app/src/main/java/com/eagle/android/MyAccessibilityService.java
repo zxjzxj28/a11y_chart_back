@@ -383,6 +383,29 @@ public class MyAccessibilityService extends AccessibilityService {
 
     }
 
+    public void clickByIdOrText(String extra, AccessibilityNodeInfo node){
+        String viewId = extra.split(",")[0];
+        String text = extra.split(",")[1];
+        if (node == null){
+            node = getRootInActiveWindow();
+        }
+        // 遍历所有子节点
+        for (int i = 0; i < node.getChildCount(); i++) {
+            AccessibilityNodeInfo childNode = node.getChild(i);
+            if (childNode != null) {
+                // 检查节点的属性
+                if (viewId.equals(childNode.getViewIdResourceName()) ||
+                        text.equals(childNode.getText())) {
+//                    childNode.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                    childNode.performAction(AccessibilityNodeInfo.ACTION_FOCUS);
+                }
+
+                // 递归查找子节点
+                clickByIdOrText(extra, childNode);
+            }
+        }
+    }
+
     public void clickNode(String id){
         AccessibilityNodeInfo rootNode = getRootInActiveWindow();
         if (lastFocusNode != null){
@@ -532,6 +555,7 @@ public class MyAccessibilityService extends AccessibilityService {
                     try {
                         res.put("action","10");
                         res.put("activity", currentActivityName);
+                        res.put("packageName", packageName);
                     } catch (JSONException e) {
                         throw new RuntimeException(e);
                     }
