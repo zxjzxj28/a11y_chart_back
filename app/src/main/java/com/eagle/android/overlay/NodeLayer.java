@@ -142,11 +142,19 @@ public class NodeLayer extends View {
     private void recomputeImageMapping(int vw, int vh) {
         if (chartBmp == null || vw <= 0 || vh <= 0) return;
         int bw = chartBmp.getWidth(), bh = chartBmp.getHeight();
-        float sx = vw * 1f / bw, sy = vh * 1f / bh;
-        scale = Math.min(sx, sy);
-        int dw = (int)(bw * scale), dh = (int)(bh * scale);
-        int left = (vw - dw)/2, top = (vh - dh)/2;
+
+        // 关键：按窗口可用宽度强制等比缩放
+        float s = vw * 1f / bw;
+        int dw = vw;                    // 宽度正好等于容器宽
+        int dh = Math.round(bh * s);    // 高度按比例
+
+        // 居中（垂直方向）
+        int left = 0;
+        int top = (vh - dh) / 2;
+        if (top < 0) top = 0; // 极端情况下保护
+
         imageDstLocal.set(left, top, left + dw, top + dh);
+        this.scale = s;
     }
 
 
