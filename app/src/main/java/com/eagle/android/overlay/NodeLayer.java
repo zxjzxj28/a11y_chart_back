@@ -76,14 +76,13 @@ public class NodeLayer extends View {
                 boolean ok = tapper.tap(n.rectScreen.centerX(), n.rectScreen.centerY());
                 if (ok) {
                     sendEventForVirtualView(id, android.view.accessibility.AccessibilityEvent.TYPE_VIEW_CLICKED);
-                    announceForAccessibility("已选择 " + n.label);
                 }
                 return ok;
             } else if (action == AccessibilityNodeInfoCompat.ACTION_ACCESSIBILITY_FOCUS) {
                 System.out.println("聚焦到了" + n.label);
-                focusedScreenRect = n.rectScreen; invalidate(); return false;
+                focusedScreenRect = n.rectScreen; invalidate(); return true;
             } else if (action == AccessibilityNodeInfoCompat.ACTION_CLEAR_ACCESSIBILITY_FOCUS) {
-                focusedScreenRect = null; invalidate(); return false;
+                focusedScreenRect = null; invalidate(); return true;
             }
             return false;
         }
