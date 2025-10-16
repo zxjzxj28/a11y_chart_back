@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 打开图表视图的快捷键（总标题） -->
+    <PreferenceCategory android:title="图表视图快捷键">
+
+        <!-- 1. 音量键 -->
+        <SwitchPreferenceCompat
+            android:key="feature_shortcut_volume_enabled"
+            android:title="音量键"
+            android:summary="开启后，可进入配置页设置触发方式" />
+
+        <Preference
+            android:key="pref_volume_config"
+            android:title="配置音量键触发"
+            android:summary="例如：上+下（500ms 内），或双击音量上"
+            android:enabled="false" />
+
+        <!-- 2. 语音指令 -->
+        <SwitchPreferenceCompat
+            android:key="feature_shortcut_voice_enabled"
+            android:title="语音指令"
+            android:summary="开启后，可进入配置页设置触发口令（≤4 个字）" />
+
+        <Preference
+            android:key="pref_voice_config"
+            android:title="配置语音指令"
+            android:summary="自定义一个不超过 4 个字的口令"
+            android:enabled="false" />
+
+        <!-- 3. 自定义手势 -->
+        <SwitchPreferenceCompat
+            android:key="feature_shortcut_gesture_enabled"
+            android:title="自定义手势"
+            android:summary="开启后，可进入配置页选择可监听的无障碍手势" />
+
+        <Preference
+            android:key="pref_gesture_config"
+            android:title="配置自定义手势"
+            android:summary="从无障碍可监听的手势中选择"
+            android:enabled="false" />
+    </PreferenceCategory>
+
+    <!-- 其他功能开关 -->
+    <PreferenceCategory android:title="其他">
+
+        <SwitchPreferenceCompat
+            android:key="feature_chart_voice_qa_enabled"
+            android:title="开启语音图表问答"
+            android:summary="允许通过语音与图表进行问答交互" />
+
+        <SwitchPreferenceCompat
+            android:key="feature_sort_by_data_enabled"
+            android:title="按照数据排序"
+            android:summary="开启后，按数据值而非布局顺序进行排序" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

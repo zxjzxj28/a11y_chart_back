@@ -1,0 +1,48 @@
+<resources>
+    <!-- Reply Preference -->
+    <string-array name="reply_entries">
+        <item>Reply</item>
+        <item>Reply to all</item>
+    </string-array>
+
+    <string-array name="reply_values">
+        <item>reply</item>
+        <item>reply_all</item>
+    </string-array>
+    <string-array name="vol_pattern_entries">
+        <item>音量上 + 音量下</item>
+        <item>音量下 + 音量上</item>
+        <item>双击音量上</item>
+        <item>双击音量下</item>
+        <item>长按音量上</item>
+        <item>长按音量下</item>
+    </string-array>
+    <string-array name="vol_pattern_values">
+        <item>UP+DOWN</item>
+        <item>DOWN+UP</item>
+        <item>UPx2</item>
+        <item>DOWNx2</item>
+        <item>UP_LONG</item>
+        <item>DOWN_LONG</item>
+    </string-array>
+    <string-array name="gesture_entries">
+        <item>上滑</item>
+        <item>下滑</item>
+        <item>左滑</item>
+        <item>右滑</item>
+        <item>上滑再下滑</item>
+        <item>下滑再上滑</item>
+        <item>左滑再右滑</item>
+        <item>右滑再左滑</item>
+    </string-array>
+    <string-array name="gesture_values">
+        <item>SWIPE_UP</item>
+        <item>SWIPE_DOWN</item>
+        <item>SWIPE_LEFT</item>
+        <item>SWIPE_RIGHT</item>
+        <item>SWIPE_UP_AND_DOWN</item>
+        <item>SWIPE_DOWN_AND_UP</item>
+        <item>SWIPE_LEFT_AND_RIGHT</item>
+        <item>SWIPE_RIGHT_AND_LEFT</item>
+    </string-array>
+</resources>
