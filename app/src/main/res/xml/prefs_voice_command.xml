@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <EditTextPreference
+        android:key="voice_trigger_phrase"
+        android:title="触发口令（≤4 个字）"
+        android:dialogTitle="输入不超过 4 个字的口令"
+        app:useSimpleSummaryProvider="true"
+        android:defaultValue="打开图表" />
+</PreferenceScreen>

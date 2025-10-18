@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 这里用单选；若你要支持多选可改成 MultiSelectListPreference -->
+    <ListPreference
+        android:key="a11y_gesture_choice"
+        android:title="选择手势"
+        android:entries="@array/gesture_entries"
+        android:entryValues="@array/gesture_values"
+        android:defaultValue="SWIPE_UP"
+        android:summary="%s" />
+</PreferenceScreen>
