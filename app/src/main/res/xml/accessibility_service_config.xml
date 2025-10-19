@@ -11,4 +11,5 @@
     android:canTakeScreenshot="true"
     android:accessibilityFeedbackType="feedbackGeneric"
     android:canRetrieveWindowContent="true"
-    android:settingsActivity="com.eagle.android.a11y.SettingsActivity"/>
+    android:settingsActivity="com.eagle.android.a11y.SettingsActivity"
+    android:canRequestFilterKeyEvents="true"/>

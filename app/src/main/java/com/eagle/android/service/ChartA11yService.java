@@ -2,6 +2,7 @@ package com.eagle.android.service;
 
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityButtonController;
+import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.GestureDescription;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -13,6 +14,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.view.Display;
+import android.view.KeyEvent;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityNodeInfo;
@@ -60,6 +62,7 @@ public class ChartA11yService extends AccessibilityService {
     private long lastDetectAt = 0L;
     private final Runnable detectRunnable = this::detectOnce;
 
+    private ChartResult curResult;
     // 提示虚拟结点 Overlay
 //    private ChartHintOverlay hintOverlay;
 //    private TestOverLay hintOverlay;
@@ -100,7 +103,9 @@ public class ChartA11yService extends AccessibilityService {
         String voicePhrase = sp.getString("voice_trigger_phrase", "打开图表");
         String gestureChoice = sp.getString("a11y_gesture_choice", "SWIPE_UP");
         System.out.println("voicePhrase:" +  voicePhrase + "gestureChoice:" + gestureChoice );
-
+        AccessibilityServiceInfo info = getServiceInfo();
+        info.flags |= android.accessibilityservice.AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS;
+        setServiceInfo(info);
 //        debugMarkOverlay = new com.eagle.android.overlay.DebugMarkOverlay(this);
 //        debugMarkOverlay.setEnabled(true);
 //        hintOverlay = new ChartHintOverlay(this, this::enterChartMode);
@@ -161,6 +166,178 @@ public class ChartA11yService extends AccessibilityService {
                 @Override public void onClicked(AccessibilityButtonController controller) { togglePanel(); }
             };
             ab.registerAccessibilityButtonCallback(abCb);
+        }
+    }
+    private String volPattern = "UP+DOWN";
+    private int volWindowMs = 1000;
+    private int longPressMs = 500;
+    private static final long TOGGLE_COOLDOWN_MS = 800;
+    private static class KeyHit {
+        final String token; // "UP" or "DOWN"
+        final long t;
+        KeyHit(String token, long t) { this.token = token; this.t = t; }
+    }
+
+    private final java.util.ArrayDeque<KeyHit> volHits = new java.util.ArrayDeque<>();
+    private final Handler volHandler = new Handler(Looper.getMainLooper());
+    private boolean upDownPressed = false, downDownPressed = false;
+    private boolean upLongFired = false, downLongFired = false;
+    private long lastToggleAt = 0L;
+    private boolean consumeOnTrigger = false;   // 可做成偏好项：匹配时是否“吃掉”按键
+    @Override
+    public boolean onKeyEvent(KeyEvent event) {
+//        System.out.println("进入音量");
+        if (!getSharedPreferences("a11y_prefs", MODE_PRIVATE)
+                .getBoolean("feature_shortcut_volume_enabled", false)) {
+            System.out.println("设置为false");
+            return false;
+        }
+        volPattern = getSharedPreferences("a11y_prefs", MODE_PRIVATE)
+                .getString("volume_combo_pattern", "UP+DOWN");
+
+//        if (event.getAction() != KeyEvent.ACTION_DOWN) {
+//            return false;
+//        }
+        final int code = event.getKeyCode();
+        final int action = event.getAction();
+        final long now = event.getEventTime();
+        System.out.println("repeat:" + event.getRepeatCount());
+        if (action == KeyEvent.ACTION_DOWN) {
+            if (code == KeyEvent.KEYCODE_VOLUME_UP) {
+                if (!upDownPressed) { // 首次按下
+                    upDownPressed = true; upLongFired = false;
+                    scheduleLong("UP");
+//                    System.out.println("首次按下up");
+                } else if (event.getRepeatCount() > 0 && !upLongFired) {
+                    // 部分 ROM 会在长按时产生 repeat
+                    triggerIfMatch("UP_LONG");
+//                    System.out.println("长按up");
+                    upLongFired = true;
+                }
+            } else { // VOLUME_DOWN
+                if (!downDownPressed) {
+                    downDownPressed = true; downLongFired = false;
+//                    System.out.println("首次按下down");
+                    scheduleLong("DOWN");
+                } else if (event.getRepeatCount() > 0 && !downLongFired) {
+//                    System.out.println("长按down");
+                    triggerIfMatch("DOWN_LONG");
+                    downLongFired = true;
+                }
+            }
+        } else if (action == KeyEvent.ACTION_UP) {
+            if (code == KeyEvent.KEYCODE_VOLUME_UP) {
+                cancelLong("UP");
+                upDownPressed = false;
+            } else {
+                cancelLong("DOWN");
+                downDownPressed = false;
+            }
+        }
+
+        // ---- 短按序列（UP+DOWN / DOWN+UP / UPx2 / DOWNx2）----
+        // 只在 "按下" 的瞬间记录一次
+        if (action == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
+            String token = (code == KeyEvent.KEYCODE_VOLUME_UP) ? "UP" : "DOWN";
+            volHits.addLast(new KeyHit(token, now));
+            pruneOldHits(now);
+
+            // 顺序组合
+            if ("UP+DOWN".equals(volPattern)) {
+                System.out.println("UP+DOWN");
+                if (matchTwo("UP", "DOWN")) {
+//                    System.out.println("UP+DOWN");
+                    triggerIfMatch("UP+DOWN");
+                };
+            } else if ("DOWN+UP".equals(volPattern)) {
+                if (matchTwo("DOWN", "UP")){
+//                    System.out.println("DOWN+UP");
+                    triggerIfMatch("DOWN+UP");
+                }
+            }
+            // 双击
+            else if ("UPx2".equals(volPattern)) {
+                if (matchDouble("UP")){
+//                    System.out.println("UPx2");
+                    triggerIfMatch("UPx2");
+                }
+            } else if ("DOWNx2".equals(volPattern)) {
+                if (matchDouble("DOWN")){
+//                    System.out.println("DOWNx2");
+                    triggerIfMatch("DOWNx2");
+                }
+            }
+            // 长按在定时器/重复里处理
+        }
+
+
+        // 将最近按键放进缓冲，按 volWindowMs 裁剪，然后与 volume_combo_pattern 比对
+        // 若匹配：enterChartMode() 或 togglePanel();
+        return false; // 返回 true 则“吃掉”按键；false 让系统继续处理音量
+    }
+    private void pruneOldHits(long now) {
+        while (!volHits.isEmpty() && now - volHits.peekFirst().t > volWindowMs) {
+            volHits.removeFirst();
+        }
+    }
+
+    private boolean matchTwo(String a, String b) {
+        if (volHits.size() < 2) return false;
+        KeyHit[] arr = volHits.toArray(new KeyHit[0]);
+        int n = arr.length;
+        return a.equals(arr[n-2].token) && b.equals(arr[n-1].token);
+    }
+
+    private boolean matchDouble(String x) {
+        if (volHits.size() < 2) return false;
+        KeyHit[] arr = volHits.toArray(new KeyHit[0]);
+        int n = arr.length;
+        return x.equals(arr[n-2].token) && x.equals(arr[n-1].token);
+    }
+
+    private void scheduleLong(String which) {
+        if ("UP".equals(which) && "UP_LONG".equals(volPattern)) {
+            volHandler.postDelayed(upLongRunnable, longPressMs);
+        } else if ("DOWN".equals(which) && "DOWN_LONG".equals(volPattern)) {
+            volHandler.postDelayed(downLongRunnable, longPressMs);
+        }
+    }
+
+    private void cancelLong(String which) {
+        if ("UP".equals(which)) volHandler.removeCallbacks(upLongRunnable);
+        else volHandler.removeCallbacks(downLongRunnable);
+    }
+
+    private final Runnable upLongRunnable = () -> {
+        if (!upLongFired) {
+            triggerIfMatch("UP_LONG");
+            upLongFired = true;
+        }
+    };
+    private final Runnable downLongRunnable = () -> {
+        if (!downLongFired) {
+            triggerIfMatch("DOWN_LONG");
+            downLongFired = true;
+        }
+    };
+
+    private void triggerIfMatch(String matched) {
+        // 只有匹配当前设置的项才触发
+        System.out.println("判断");
+        if (!matched.equals(volPattern)) return;
+        System.out.println("符合逻辑");
+        long now = SystemClock.uptimeMillis();
+        if (now - lastToggleAt < TOGGLE_COOLDOWN_MS) return; // 冷却
+        lastToggleAt = now;
+
+        // 触发图表视图的开关
+        mainHandler.post(this::togglePanel);
+
+        // 可选：触发时是否“吃掉”该次按键，避免音量变化
+        if (consumeOnTrigger) {
+            // 没有直接从这里 return true 的通道；在 onKeyEvent 里可根据一个标记返回 true
+            // 这里给个标记即可：
+            // this.consumeNextKeyEvent = true;  // 若你需要，自己加个布尔变量
         }
     }
     public void announce(@NonNull CharSequence message) {
@@ -302,21 +479,22 @@ public class ChartA11yService extends AccessibilityService {
     // —— 仍保留原按钮触发逻辑（方便手动测试）——
     private void togglePanel() {
         if (panel.isShowing()) { panel.hide(); return; }
-        takeScreenshotSafe(bmp -> {
-            if (bmp == null) { Toast.makeText(this, "未获取到屏幕", Toast.LENGTH_SHORT).show(); return; }
-            io.execute(() -> {
-                ChartResult res = detector.detectSingleChart(bmp);
-                mainHandler.post(() -> {
-                    if (res != null) {
-                        cacheResult(res);
-                        panel.show(res.chartBitmap, res.chartRectOnScreen, res.nodes);
-//                        if (hintOverlay.isShowing()) hintOverlay.hide();
-                    } else {
-                        Toast.makeText(this, "未发现图表", Toast.LENGTH_SHORT).show();
-                    }
-                });
-            });
-        });
+        enterChartMode();
+//        takeScreenshotSafe(bmp -> {
+//            if (bmp == null) { Toast.makeText(this, "未获取到屏幕", Toast.LENGTH_SHORT).show(); return; }
+//            io.execute(() -> {
+//                ChartResult res = detector.detectSingleChart(bmp);
+//                mainHandler.post(() -> {
+//                    if (res != null) {
+//                        cacheResult(res);
+//                        panel.show(res.chartBitmap, res.chartRectOnScreen, res.nodes);
+////                        if (hintOverlay.isShowing()) hintOverlay.hide();
+//                    } else {
+//                        Toast.makeText(this, "未发现图表", Toast.LENGTH_SHORT).show();
+//                    }
+//                });
+//            });
+//        });
     }
 
     // —— 截屏（API 30–34 兼容签名）——
