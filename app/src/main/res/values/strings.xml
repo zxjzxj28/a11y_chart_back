@@ -3,6 +3,9 @@
     <string name="accessibility_service_description">这是一个辅助功能服务的描述</string>
     <string name="my_text">Click <a href="http://www.baidu.com">here</a> to visit our website.</string>
     <string name="title_activity_settings">SettingsActivity</string>
+    <string name="open_chart_preview">查看示例图表</string>
+    <string name="chart_preview_content_desc">示例折线图，包含 10 个年度数据点</string>
+    <string name="chart_preview_summary">1980-1988 年数据缓慢上升，1990 年后跃升至 500 以上，1998 年达到 624 的峰值，1994 年出现一次低点。</string>
 
     <!-- Preference Titles -->
     <string name="messages_header">Messages</string>
