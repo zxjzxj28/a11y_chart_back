@@ -13,11 +13,19 @@
         android:id="@+id/chartPreviewTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="图表预览"
+        android:text="图表访问"
         android:textAppearance="@style/TextAppearance.AppCompat.Headline"
         android:textColor="#1F2937"
         android:textStyle="bold"
-        android:contentDescription="图表预览" />
+        android:contentDescription="图表访问" />
+
+    <Button
+        android:id="@+id/btnShowSummary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="摘要"
+        android:contentDescription="查看图表摘要" />
 
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
@@ -34,25 +42,19 @@
             android:adjustViewBounds="true"
             android:scaleType="fitCenter"
             android:contentDescription=""
+            android:focusable="true"
+            android:screenReaderFocusable="true"
             android:background="@drawable/chart_card_background"
             android:padding="12dp" />
 
     </androidx.cardview.widget.CardView>
 
     <Button
-        android:id="@+id/btnShowSummary"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="摘要"
-        android:contentDescription="查看图表摘要" />
-
-    <Button
         android:id="@+id/btnCloseChart"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:text="返回主页"
-        android:contentDescription="返回主界面" />
+        android:text="返回"
+        android:contentDescription="返回" />
 
 </LinearLayout>
