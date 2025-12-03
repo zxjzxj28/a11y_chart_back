@@ -54,9 +54,11 @@ public class DemoChartDetector implements ChartDetector {
         p.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
         c.drawText("Demo 柱状图（模拟数据）", dp(56), dp(28), p);
 
-        // 柱子数据（五根柱，数值 120~360）
-        int[] values = new int[]{120, 260, 180, 320, 360};
-        String[] labels = new String[]{"A","B","C","D","E"};
+        // 柱子数据（五根柱，对应示例图表的时间轴）
+        // 目标：让无障碍能够按像素坐标命中“1980 年，数量为 114”这一数据点
+        int[] years = new int[]{1980, 1988, 1990, 1994, 1998};
+        int[] values = new int[]{114, 220, 540, 360, 624};
+        String[] labels = new String[]{"1980","1988","1990","1994","1998"};
         int n = values.length;
 
         // y 方向最大值
@@ -104,7 +106,7 @@ public class DemoChartDetector implements ChartDetector {
             Rect hit = new Rect(sx - touch/2, sy - touch/2, sx + touch/2, sy + touch/2);
 
             String speak = String.format(Locale.getDefault(),
-                    "柱 %s，值 %d", labels[i], values[i]);
+                    "在%d年，数量为%d", years[i], values[i]);
             nodes.add(new NodeSpec(100 + i, hit, speak));
         }
 
