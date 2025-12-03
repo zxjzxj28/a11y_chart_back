@@ -58,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
 
         tvStatus = findViewById(R.id.tvA11yStatus);
         Button btnOpen = findViewById(R.id.btnOpenA11y);
+        Button btnPreview = findViewById(R.id.btnOpenChartPreview);
 
         refreshA11yStatus();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -70,6 +71,11 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         }
+
+        btnPreview.setOnClickListener(v -> {
+            Intent previewIntent = new Intent(MainActivity.this, ChartPreviewActivity.class);
+            startActivity(previewIntent);
+        });
     }
     @Override
     protected void onResume() {

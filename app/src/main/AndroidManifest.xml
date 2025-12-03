@@ -32,6 +32,10 @@
             android:name=".a11y.SettingsActivity"
             android:exported="false"
             android:label="@string/title_activity_settings" /> <!-- <service android:name=".SocketServerService" android:enabled="true"/> -->
+        <activity
+            android:name=".ChartPreviewActivity"
+            android:exported="false"
+            android:label="@string/open_chart_preview" />
         <!-- &lt;!&ndash; 注册广播接收器 &ndash;&gt; -->
         <!-- <receiver -->
         <!-- android:name=".ActionReceiver" -->
