@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/overlay_background"
+    android:paddingStart="@dimen/overlay_padding_horizontal"
+    android:paddingEnd="@dimen/overlay_padding_horizontal"
+    android:paddingTop="@dimen/overlay_padding_top"
+    android:paddingBottom="@dimen/overlay_padding_bottom"
+    android:fitsSystemWindows="true">
+
+    <!-- 1. 摘要节点区域 -->
+    <LinearLayout
+        android:id="@+id/summary_card"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/card_bg_selector"
+        android:paddingStart="@dimen/card_padding_horizontal"
+        android:paddingEnd="@dimen/card_padding_horizontal"
+        android:paddingTop="@dimen/card_padding"
+        android:paddingBottom="@dimen/card_padding"
+        android:layout_marginBottom="@dimen/card_margin_bottom"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:contentDescription="图表摘要">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📊"
+                android:textSize="12sp"
+                android:importantForAccessibility="no"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="图表摘要"
+                android:textSize="@dimen/text_size_label"
+                android:textColor="@color/text_accent"
+                android:fontFamily="sans-serif-medium"
+                android:layout_marginStart="6dp"
+                android:importantForAccessibility="no"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/summary_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/text_size_body"
+            android:textColor="@color/text_secondary"
+            android:lineSpacingMultiplier="1.5"
+            android:layout_marginTop="6dp"
+            android:importantForAccessibility="no"
+            tools:text="该柱状图展示2024年1-5月销售数据，4月达到峰值75万元"/>
+    </LinearLayout>
+
+    <!-- 2. 图表图像区域 -->
+    <LinearLayout
+        android:id="@+id/chart_image_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/bg_white_rounded"
+        android:padding="@dimen/card_padding"
+        android:layout_marginTop="@dimen/section_margin_vertical"
+        android:layout_marginBottom="@dimen/section_margin_vertical"
+        android:importantForAccessibility="no"
+        android:focusable="false">
+
+        <TextView
+            android:id="@+id/chart_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/text_size_label"
+            android:textColor="@color/text_chart_title"
+            android:fontFamily="sans-serif-medium"
+            android:layout_marginBottom="8dp"
+            android:visibility="gone"
+            tools:text="2024年月度销售额（万元）"/>
+
+        <ImageView
+            android:id="@+id/chart_image"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/chart_image_max_height"
+            android:scaleType="fitCenter"
+            android:adjustViewBounds="true"
+            android:contentDescription="@null"/>
+    </LinearLayout>
+
+    <!-- 3. 数据点列表区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:layout_marginTop="@dimen/card_margin_bottom"
+        android:layout_marginBottom="@dimen/card_margin_bottom">
+
+        <!-- 列表头部 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="2dp"
+            android:paddingEnd="2dp"
+            android:layout_marginBottom="@dimen/card_margin_bottom"
+            android:importantForAccessibility="no">
+
+            <TextView
+                android:id="@+id/data_list_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textSize="@dimen/text_size_label"
+                android:textColor="@color/text_hint"
+                tools:text="数据详情（1/5）"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="@dimen/text_size_hint"
+                android:textColor="@color/text_chart_title"
+                android:text="← 左右滑动 →"/>
+        </LinearLayout>
+
+        <!-- 数据点RecyclerView -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/data_point_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:overScrollMode="never"
+            android:scrollbars="none"/>
+    </LinearLayout>
+
+    <!-- 4. 退出节点区域 -->
+    <LinearLayout
+        android:id="@+id/exit_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="@drawable/card_bg_exit_selector"
+        android:paddingStart="@dimen/card_padding_horizontal"
+        android:paddingEnd="@dimen/card_padding_horizontal"
+        android:paddingTop="@dimen/card_padding"
+        android:paddingBottom="@dimen/card_padding"
+        android:gravity="center_vertical"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:contentDescription="退出视图，双击退出">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:importantForAccessibility="no">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="✕"
+                android:textSize="@dimen/text_size_value"
+                android:textColor="@color/text_primary"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="退出视图"
+                android:textSize="@dimen/text_size_body"
+                android:textColor="@color/text_primary"
+                android:fontFamily="sans-serif-medium"
+                android:layout_marginStart="8dp"/>
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/text_size_hint"
+            android:textColor="@color/text_hint"
+            android:text="向下向左滑 / 说&quot;退出&quot;"
+            android:importantForAccessibility="no"/>
+    </LinearLayout>
+
+</LinearLayout>
