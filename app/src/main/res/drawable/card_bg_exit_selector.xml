@@ -3,17 +3,17 @@
     <!-- 聚焦状态 -->
     <item android:state_focused="true">
         <shape android:shape="rectangle">
-            <solid android:color="#5C1A1A"/>
+            <solid android:color="@color/card_bg_exit_focused"/>
             <corners android:radius="10dp"/>
-            <stroke android:width="2dp" android:color="#FF6B6B"/>
+            <stroke android:width="2dp" android:color="@color/border_exit_focused"/>
         </shape>
     </item>
     <!-- 默认状态 -->
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="#1E1E1E"/>
+            <solid android:color="@color/card_bg_normal"/>
             <corners android:radius="10dp"/>
-            <stroke android:width="2dp" android:color="#333333"/>
+            <stroke android:width="2dp" android:color="@color/border_normal"/>
         </shape>
     </item>
 </selector>

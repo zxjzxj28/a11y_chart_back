@@ -14,6 +14,7 @@ import android.text.method.LinkMovementMethod;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -59,6 +60,7 @@ public class MainActivity extends AppCompatActivity {
         tvStatus = findViewById(R.id.tvA11yStatus);
         Button btnOpen = findViewById(R.id.btnOpenA11y);
         Button btnPreview = findViewById(R.id.btnOpenChartPreview);
+        Button btnShowMockAccessOverlay = findViewById(R.id.btnShowMockAccessOverlay);
 
         refreshA11yStatus();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -75,6 +77,16 @@ public class MainActivity extends AppCompatActivity {
         btnPreview.setOnClickListener(v -> {
             Intent previewIntent = new Intent(MainActivity.this, ChartPreviewActivity.class);
             startActivity(previewIntent);
+        });
+
+        btnShowMockAccessOverlay.setOnClickListener(v -> {
+            if (!isA11yServiceEnabled(this, ChartA11yService.class)) {
+                Toast.makeText(this, "请先在系统设置中开启无障碍服务", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            Intent intent = new Intent(MainActivity.this, ChartA11yService.class);
+            intent.setAction(ChartA11yService.ACTION_SHOW_MOCK_ACCESS_OVERLAY);
+            startService(intent);
         });
     }
     @Override
