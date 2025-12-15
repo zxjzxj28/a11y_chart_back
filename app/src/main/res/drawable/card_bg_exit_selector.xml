@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 聚焦状态 -->
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#5C1A1A"/>
+            <corners android:radius="10dp"/>
+            <stroke android:width="2dp" android:color="#FF6B6B"/>
+        </shape>
+    </item>
+    <!-- 默认状态 -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#1E1E1E"/>
+            <corners android:radius="10dp"/>
+            <stroke android:width="2dp" android:color="#333333"/>
+        </shape>
+    </item>
+</selector>

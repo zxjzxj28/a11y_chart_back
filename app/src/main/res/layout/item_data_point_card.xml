@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/card_bg_data_point_selector"
+    android:paddingStart="@dimen/card_padding_horizontal"
+    android:paddingEnd="@dimen/card_padding_horizontal"
+    android:paddingTop="@dimen/card_padding"
+    android:paddingBottom="@dimen/card_padding"
+    android:layout_marginBottom="@dimen/card_margin_bottom"
+    android:focusable="true"
+    android:focusableInTouchMode="true">
+
+    <!-- 标题行：数据标签 + 数据值 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:importantForAccessibility="no">
+
+        <TextView
+            android:id="@+id/data_label"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="@dimen/text_size_title"
+            android:textColor="@color/text_primary"
+            android:textStyle="bold"
+            tools:text="1月"/>
+
+        <TextView
+            android:id="@+id/data_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/text_size_value"
+            android:textColor="@color/text_accent"
+            android:textStyle="bold"
+            tools:text="45万元"/>
+    </LinearLayout>
+
+    <!-- 数据描述 -->
+    <TextView
+        android:id="@+id/data_description"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="@dimen/text_size_label"
+        android:textColor="@color/text_tertiary"
+        android:lineSpacingMultiplier="1.4"
+        android:layout_marginTop="4dp"
+        android:importantForAccessibility="no"
+        tools:text="销售额为45万元，环比下降12%"/>
+
+</LinearLayout>

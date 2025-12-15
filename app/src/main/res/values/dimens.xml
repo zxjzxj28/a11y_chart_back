@@ -1,3 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="fab_margin">16dp</dimen>
+
+    <!-- 无障碍视图内边距 -->
+    <dimen name="overlay_padding_horizontal">12dp</dimen>
+    <dimen name="overlay_padding_top">48dp</dimen>
+    <dimen name="overlay_padding_bottom">56dp</dimen>
+    <dimen name="card_padding">12dp</dimen>
+    <dimen name="card_padding_horizontal">14dp</dimen>
+
+    <!-- 外边距 -->
+    <dimen name="card_margin_bottom">8dp</dimen>
+    <dimen name="section_margin_vertical">4dp</dimen>
+
+    <!-- 圆角 -->
+    <dimen name="card_corner_radius">12dp</dimen>
+    <dimen name="card_corner_radius_small">10dp</dimen>
+
+    <!-- 边框 -->
+    <dimen name="card_border_width">2dp</dimen>
+
+    <!-- 字号 -->
+    <dimen name="text_size_title">13sp</dimen>
+    <dimen name="text_size_value">14sp</dimen>
+    <dimen name="text_size_body">13sp</dimen>
+    <dimen name="text_size_label">11sp</dimen>
+    <dimen name="text_size_hint">10sp</dimen>
+
+    <!-- 图表图像 -->
+    <dimen name="chart_image_max_height">120dp</dimen>
 </resources>
