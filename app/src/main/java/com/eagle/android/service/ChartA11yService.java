@@ -4,6 +4,7 @@ import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityButtonController;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.GestureDescription;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Path;
@@ -28,6 +29,8 @@ import com.eagle.android.detector.DemoChartDetector; // 演示用，接入真模
 import com.eagle.android.model.ChartResult;
 import com.eagle.android.model.NodeSpec;
 import com.eagle.android.overlay.ChartPanelWindow;
+import com.eagle.android.overlay.ChartAccessOverlayDemo;
+import com.eagle.android.overlay.ChartAccessOverlayManager;
 import com.eagle.android.overlay.DebugMarkOverlay;
 import com.eagle.android.overlay.FocusSwitchOverlay;
 import com.eagle.android.overlay.SimpleOverLay;
@@ -45,12 +48,16 @@ import java.util.concurrent.Executors;
  */
 public class ChartA11yService extends AccessibilityService {
 
+    public static final String ACTION_SHOW_MOCK_ACCESS_OVERLAY =
+            "com.eagle.android.service.action.SHOW_MOCK_ACCESS_OVERLAY";
+
     private ChartPanelWindow panel;
     private AccessibilityButtonController ab;
     private AccessibilityButtonController.AccessibilityButtonCallback abCb;
     private Handler mainHandler;
     private final ExecutorService io = Executors.newSingleThreadExecutor();
     private ChartDetector detector = new DemoChartDetector(); // TODO: 替换为你的真实实现
+    private ChartAccessOverlayManager demoAccessOverlayManager;
 
     // 截屏节流
     private static final long SHOT_INTERVAL_MS = 1000;
@@ -167,6 +174,14 @@ public class ChartA11yService extends AccessibilityService {
             };
             ab.registerAccessibilityButtonCallback(abCb);
         }
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent != null && ACTION_SHOW_MOCK_ACCESS_OVERLAY.equals(intent.getAction())) {
+            showMockAccessOverlay();
+        }
+        return super.onStartCommand(intent, flags, startId);
     }
     private String volPattern = "UP+DOWN";
     private int volWindowMs = 1000;
@@ -352,11 +367,21 @@ public class ChartA11yService extends AccessibilityService {
         am.sendAccessibilityEvent(e);
     }
 
+    private void showMockAccessOverlay() {
+        if (demoAccessOverlayManager != null && demoAccessOverlayManager.isShowing()) {
+            return;
+        }
+        demoAccessOverlayManager = ChartAccessOverlayDemo.showMockOverlay(this);
+    }
+
     @Override
     public void onDestroy() {
         super.onDestroy();
         if (ab != null && abCb != null) ab.unregisterAccessibilityButtonCallback(abCb);
         io.shutdownNow();
+        if (demoAccessOverlayManager != null && demoAccessOverlayManager.isShowing()) {
+            demoAccessOverlayManager.dismissAccessView();
+        }
         if (panel != null && panel.isShowing()) panel.hide();
 //        if (debugMarkOverlay != null) debugMarkOverlay.hide();
 //        if(simpleOverLay != null) simpleOverLay.hide();
