@@ -27,11 +27,16 @@ import com.eagle.android.detector.ChartDetector;
 import com.eagle.android.detector.DemoChartDetector; // 演示用，接入真模型后替换
 import com.eagle.android.model.ChartResult;
 import com.eagle.android.model.NodeSpec;
+import com.eagle.android.overlay.ChartAccessOverlayManager;
 import com.eagle.android.overlay.ChartPanelWindow;
 import com.eagle.android.overlay.DebugMarkOverlay;
 import com.eagle.android.overlay.FocusSwitchOverlay;
 import com.eagle.android.overlay.SimpleOverLay;
 import com.eagle.android.overlay.SimpleVirtualNodeOverlay;
+import com.eagle.android.model.ChartInfo;
+import com.eagle.android.model.DataPoint;
+
+import java.util.ArrayList;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -46,6 +51,7 @@ import java.util.concurrent.Executors;
 public class ChartA11yService extends AccessibilityService {
 
     private ChartPanelWindow panel;
+    private ChartAccessOverlayManager accessOverlayManager; // 无障碍卡片视图管理器
     private AccessibilityButtonController ab;
     private AccessibilityButtonController.AccessibilityButtonCallback abCb;
     private Handler mainHandler;
@@ -71,6 +77,10 @@ public class ChartA11yService extends AccessibilityService {
     private Rect lastChartRect = null;
     private List<NodeSpec> lastNodes = null;
     private Bitmap lastChartBmp = null;
+    private String lastChartSummary = null; // 图表摘要
+
+    // 视图模式偏好设置键
+    private static final String PREF_KEY_USE_CARD_VIEW = "feature_use_card_view_enabled";
 //    private SimpleVirtualNodeOverlay simpleVirtualNodeOverlay;
 //    private SimpleOverLay simpleOverLay;
 //    private DebugMarkOverlay debugMarkOverlay;
@@ -83,6 +93,10 @@ public class ChartA11yService extends AccessibilityService {
         super.onServiceConnected();
         // tap模拟点击操作
         panel = new ChartPanelWindow(this, this::tap);
+        // 初始化无障碍卡片视图管理器
+        accessOverlayManager = new ChartAccessOverlayManager(this);
+        accessOverlayManager.setOnExitListener(this::onAccessOverlayExit);
+
         SharedPreferences sp = getSharedPreferences("a11y_prefs", MODE_PRIVATE);
 
 // 顶层开关
@@ -93,7 +107,8 @@ public class ChartA11yService extends AccessibilityService {
 // 其他功能
         boolean chartVoiceQA   = sp.getBoolean("feature_chart_voice_qa_enabled", false);
         boolean sortByData     = sp.getBoolean("feature_sort_by_data_enabled", false);
-        System.out.println("chartVoiceQA:" +  chartVoiceQA + "sortByData:" + sortByData );
+        boolean useCardView    = sp.getBoolean(PREF_KEY_USE_CARD_VIEW, true); // 默认使用卡片视图
+        System.out.println("chartVoiceQA:" +  chartVoiceQA + "sortByData:" + sortByData + " useCardView:" + useCardView);
 
 // 具体参数
         String volPattern = sp.getString("volume_combo_pattern", "UP+DOWN");
@@ -358,10 +373,20 @@ public class ChartA11yService extends AccessibilityService {
         if (ab != null && abCb != null) ab.unregisterAccessibilityButtonCallback(abCb);
         io.shutdownNow();
         if (panel != null && panel.isShowing()) panel.hide();
+        if (accessOverlayManager != null && accessOverlayManager.isShowing()) {
+            accessOverlayManager.dismissAccessView();
+        }
 //        if (debugMarkOverlay != null) debugMarkOverlay.hide();
 //        if(simpleOverLay != null) simpleOverLay.hide();
 //        if (hintOverlay != null && hintOverlay.isShowing()) hintOverlay.hide();
 //        if (simpleVirtualNodeOverlay != null && simpleVirtualNodeOverlay.isShown()) simpleVirtualNodeOverlay.hide();
+    }
+
+    /**
+     * 无障碍卡片视图退出时的回调
+     */
+    private void onAccessOverlayExit() {
+        Toast.makeText(this, "已退出图表访问视图", Toast.LENGTH_SHORT).show();
     }
     private void recycleNode(AccessibilityNodeInfo n) { if (n != null) n.recycle(); }
 //    private void onChartDetected(Rect chartRect) {
@@ -478,23 +503,24 @@ public class ChartA11yService extends AccessibilityService {
 
     // —— 仍保留原按钮触发逻辑（方便手动测试）——
     private void togglePanel() {
-        if (panel.isShowing()) { panel.hide(); return; }
+        // 检查是否使用卡片视图
+        boolean useCardView = getSharedPreferences("a11y_prefs", MODE_PRIVATE)
+                .getBoolean(PREF_KEY_USE_CARD_VIEW, true);
+
+        if (useCardView) {
+            // 使用卡片视图
+            if (accessOverlayManager != null && accessOverlayManager.isShowing()) {
+                accessOverlayManager.dismissAccessView();
+                return;
+            }
+        } else {
+            // 使用原有面板视图
+            if (panel.isShowing()) {
+                panel.hide();
+                return;
+            }
+        }
         enterChartMode();
-//        takeScreenshotSafe(bmp -> {
-//            if (bmp == null) { Toast.makeText(this, "未获取到屏幕", Toast.LENGTH_SHORT).show(); return; }
-//            io.execute(() -> {
-//                ChartResult res = detector.detectSingleChart(bmp);
-//                mainHandler.post(() -> {
-//                    if (res != null) {
-//                        cacheResult(res);
-//                        panel.show(res.chartBitmap, res.chartRectOnScreen, res.nodes);
-////                        if (hintOverlay.isShowing()) hintOverlay.hide();
-//                    } else {
-//                        Toast.makeText(this, "未发现图表", Toast.LENGTH_SHORT).show();
-//                    }
-//                });
-//            });
-//        });
     }
 
     // —— 截屏（API 30–34 兼容签名）——
@@ -585,10 +611,119 @@ public class ChartA11yService extends AccessibilityService {
 
     private void enterChartMode() {
         if (lastChartRect == null || lastNodes == null || lastChartBmp == null) return;
-//        if (hintOverlay.isShowing()) hintOverlay.hide();
-        if (!panel.isShowing()) {
-            panel.show(lastChartBmp, lastChartRect, lastNodes);
+
+        // 检查是否使用卡片视图
+        boolean useCardView = getSharedPreferences("a11y_prefs", MODE_PRIVATE)
+                .getBoolean(PREF_KEY_USE_CARD_VIEW, true);
+
+        if (useCardView) {
+            // 使用无障碍卡片视图
+            if (accessOverlayManager != null && !accessOverlayManager.isShowing()) {
+                ChartInfo chartInfo = convertToChartInfo();
+                accessOverlayManager.showAccessView(chartInfo);
+                Toast.makeText(this, "已进入图表访问视图", Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            // 使用原有面板视图
+            if (!panel.isShowing()) {
+                panel.show(lastChartBmp, lastChartRect, lastNodes);
+                Toast.makeText(this, "已进入图表模式", Toast.LENGTH_SHORT).show();
+            }
         }
-        Toast.makeText(this, "已进入图表模式", Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * 将当前缓存的图表数据转换为 ChartInfo 对象
+     */
+    private ChartInfo convertToChartInfo() {
+        ChartInfo chartInfo = new ChartInfo();
+
+        // 设置摘要（可以从配置或检测结果中获取）
+        String summary = lastChartSummary;
+        if (summary == null || summary.isEmpty()) {
+            // 生成默认摘要
+            summary = generateDefaultSummary();
+        }
+        chartInfo.setSummary(summary);
+
+        // 设置图表标题
+        chartInfo.setChartTitle("图表数据");
+
+        // 设置图表图片
+        chartInfo.setChartImage(lastChartBmp);
+
+        // 转换数据点
+        if (lastNodes != null && !lastNodes.isEmpty()) {
+            ArrayList<DataPoint> dataPoints = new ArrayList<>();
+            for (NodeSpec node : lastNodes) {
+                DataPoint dp = new DataPoint();
+                dp.setLabel(node.label);
+                // 从 label 中提取值（如果有的话）
+                String[] parts = parseNodeLabel(node.label);
+                dp.setValue(parts[1]);
+                dp.setDescription(parts[0]);
+                dataPoints.add(dp);
+            }
+            chartInfo.setDataPoints(dataPoints);
+        }
+
+        return chartInfo;
+    }
+
+    /**
+     * 生成默认摘要
+     */
+    private String generateDefaultSummary() {
+        if (lastNodes == null || lastNodes.isEmpty()) {
+            return "该图表暂无数据";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("该图表包含").append(lastNodes.size()).append("个数据点。");
+
+        // 尝试找出最大值和最小值
+        String maxLabel = null, minLabel = null;
+        // 这里只是简单示例，实际可以根据数据做更复杂的分析
+        if (lastNodes.size() > 0) {
+            sb.append("数据点包括：");
+            for (int i = 0; i < Math.min(lastNodes.size(), 3); i++) {
+                if (i > 0) sb.append("、");
+                sb.append(lastNodes.get(i).label);
+            }
+            if (lastNodes.size() > 3) {
+                sb.append("等");
+            }
+            sb.append("。");
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * 解析节点标签，分离出描述和值
+     * @return String[0]=描述, String[1]=值
+     */
+    private String[] parseNodeLabel(String label) {
+        String[] result = new String[]{"", ""};
+        if (label == null || label.isEmpty()) {
+            return result;
+        }
+
+        // 尝试解析格式如 "1980年: 114" 或 "1月 45万元"
+        if (label.contains(":")) {
+            String[] parts = label.split(":", 2);
+            result[0] = parts[0].trim();
+            result[1] = parts.length > 1 ? parts[1].trim() : "";
+        } else if (label.contains("：")) {
+            String[] parts = label.split("：", 2);
+            result[0] = parts[0].trim();
+            result[1] = parts.length > 1 ? parts[1].trim() : "";
+        } else {
+            // 没有分隔符，整个作为描述
+            result[0] = label;
+            result[1] = "";
+        }
+
+        return result;
     }
 }
