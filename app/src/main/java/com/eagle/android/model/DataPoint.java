@@ -44,24 +44,9 @@ public class DataPoint {
 
     /**
      * 用于无障碍播报的完整描述
+     * 只返回数据点描述，不包含x值和y值
      */
     public String getAccessibilityDescription() {
-        StringBuilder sb = new StringBuilder();
-        if (label != null && !label.isEmpty()) {
-            sb.append(label);
-        }
-        if (value != null && !value.isEmpty()) {
-            if (sb.length() > 0) {
-                sb.append("，");
-            }
-            sb.append(value);
-        }
-        if (description != null && !description.isEmpty()) {
-            if (sb.length() > 0) {
-                sb.append("，");
-            }
-            sb.append(description);
-        }
-        return sb.toString();
+        return description != null ? description : "";
     }
 }
