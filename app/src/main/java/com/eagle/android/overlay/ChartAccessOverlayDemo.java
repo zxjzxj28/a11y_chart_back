@@ -27,8 +27,8 @@ public final class ChartAccessOverlayDemo {
      */
     public static ChartInfo createMockChartInfo(Context context) {
         ChartInfo chartInfo = new ChartInfo();
-        chartInfo.setSummary("这是一个标题为支出构成的饼图，其中服务类占比最高，达到70.65%，交通占比最低，仅为0.14%，最高与最低相差约70个百分点，整体呈现高度集中的分布特征，服务类独占七成以上，餐饮和转账分别占11.07%和10.28%，发红包占6.64%，而娱乐和交通合计不足2%。");
-        chartInfo.setChartTitle("支出构成");
+        chartInfo.setSummary("这是一个描述支出构成的饼图，其中服务类占比最高，达到69.94%，交通占比最低，仅为0.13%，最高与最低相差约70个百分点，餐饮和转账分别占10.96%和10.17%，发红包占6.57%，而娱乐和交通合计不足3%，整体支出主要集中于服务类开销。");
+        chartInfo.setChartTitle("图表");
         chartInfo.setDataPoints(createMockDataPoints());
         chartInfo.setChartImage(loadChartBitmap(context));
         return chartInfo;
@@ -48,12 +48,12 @@ public final class ChartAccessOverlayDemo {
 
     private static List<DataPoint> createMockDataPoints() {
         return new ArrayList<>(Arrays.asList(
-                new DataPoint("交通", "0.14%", "交通的支出占比为0.14%"),
-                new DataPoint("娱乐", "1.23%", "娱乐的支出占比为1.23%"),
-                new DataPoint("发红包", "6.64%", "发红包的支出占比为6.64%"),
-                new DataPoint("转账", "10.28%", "转账的支出占比为10.28%"),
-                new DataPoint("餐饮", "11.07%", "餐饮的支出占比为11.07%"),
-                new DataPoint("服务", "70.65%", "服务的支出占比为70.65%")
+                new DataPoint("交通", "0.13%", "交通的支出占比为0.13%"),
+                new DataPoint("娱乐", "2.22%", "娱乐的支出占比为2.22%"),
+                new DataPoint("发红包", "6.57%", "发红包的支出占比为6.57%"),
+                new DataPoint("转账", "10.17%", "转账的支出占比为10.17%"),
+                new DataPoint("餐饮", "10.96%", "餐饮的支出占比为10.96%"),
+                new DataPoint("服务", "69.94%", "服务的支出占比为69.94%")
         ));
     }
 

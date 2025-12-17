@@ -1,6 +1,18 @@
 <resources>
     <string name="app_name">chart-a11y</string>
-    <string name="accessibility_service_description">这是一个辅助功能服务的描述</string>
+    <string name="accessibility_service_description">
+ 本服务帮助视障用户访问移动应用中的图表信息。
+
+<!--\n\n【主要功能】-->
+<!--    图表自动识别：自动检测当前页面中的图表，并将图表内容解析为可朗读的文字描述。\n-->
+<!--    访问视图：为识别到的图表生成无障碍访问视图，支持通过屏幕阅读器聚焦和朗读图表摘要及各数据点信息。\n-->
+<!--    手势交互：支持通过音量键快捷唤出视图，以及滑动手势进行导航、重复播报和自动播报。\n-->
+<!--    语音交互：支持通过语音指令唤出视图、切换焦点、控制播报和退出视图。\n-->
+<!--    个性化设置：可自定义音量键触发方式、手势映射和语音指令。-->
+        \n\n【权限说明】
+    本服务需要监听窗口内容变化以检测图表，需要截取屏幕以进行图表识别，需要悬浮窗权限以显示访问视图。服务运行时会将图表图像发送至云端进行解析处理，传输过程采用加密协议保护数据安全。\n\n【使用提示】
+    启用服务后，当页面存在可访问图表时，系统会语音提示"当前页面有可访问图表"。您可通过音量键、语音指令或无障碍快捷按钮唤出图表访问视图。
+    </string>
     <string name="my_text">Click <a href="http://www.baidu.com">here</a> to visit our website.</string>
     <string name="title_activity_settings">SettingsActivity</string>
     <string name="open_chart_preview">查看示例图表</string>
