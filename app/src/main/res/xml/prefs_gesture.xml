@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <PreferenceCategory android:title="手势映射">
+    <PreferenceCategory
+        android:title="手势映射"
+        app:iconSpaceReserved="false">
 
         <ListPreference
             android:key="gesture_close_action"
@@ -9,7 +12,8 @@
             android:entries="@array/gesture_close_entries"
             android:entryValues="@array/gesture_close_values"
             android:defaultValue="SWIPE_DOWN_LEFT"
-            android:summary="%s" />
+            android:summary="%s"
+            app:iconSpaceReserved="false" />
 
         <ListPreference
             android:key="gesture_repeat_action"
@@ -17,7 +21,8 @@
             android:entries="@array/gesture_repeat_entries"
             android:entryValues="@array/gesture_repeat_values"
             android:defaultValue="ONE_FINGER_DOUBLE_TAP"
-            android:summary="%s" />
+            android:summary="%s"
+            app:iconSpaceReserved="false" />
 
         <ListPreference
             android:key="gesture_auto_broadcast_action"
@@ -25,6 +30,7 @@
             android:entries="@array/gesture_auto_entries"
             android:entryValues="@array/gesture_auto_values"
             android:defaultValue="THREE_FINGER_SWIPE"
-            android:summary="%s" />
+            android:summary="%s"
+            app:iconSpaceReserved="false" />
     </PreferenceCategory>
 </PreferenceScreen>

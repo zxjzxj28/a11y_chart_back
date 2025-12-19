@@ -1,42 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <!-- 自定义交互总览 -->
-    <PreferenceCategory android:title="图表访问交互相关设置">
+    <PreferenceCategory
+        android:title="图表访问交互相关设置"
+        app:iconSpaceReserved="false">
 
         <!-- 1. 音量键交互 -->
         <SwitchPreferenceCompat
             android:key="feature_shortcut_volume_enabled"
             android:title="音量键交互"
-            android:summary="使用音量键唤起或控制图表。开启后可在子页设置触发模式。" />
+            android:summary="使用音量键唤起或控制图表。开启后可在子页设置触发模式。"
+            app:iconSpaceReserved="false" />
 
         <Preference
             android:key="pref_volume_config"
             android:title="音量按键配置"
-            android:summary="设置音量键触发方式（同时按下、双击、长按）" />
+            android:summary="设置音量键触发方式（同时按下、双击、长按）"
+            app:iconSpaceReserved="false" />
 
 
         <!-- 2. 手势交互 -->
         <SwitchPreferenceCompat
             android:key="feature_shortcut_gesture_enabled"
             android:title="手势交互"
-            android:summary="开启可为关闭视图、重复播报、自动播报分别映射合适的无障碍手势。" />
+            android:summary="开启可为关闭视图、重复播报、自动播报分别映射合适的无障碍手势。"
+            app:iconSpaceReserved="false" />
 
         <Preference
             android:key="pref_gesture_config"
             android:title="手势映射配置"
-            android:summary="设置关闭视图、重复朗读与自动播报对应的手势"/>
+            android:summary="设置关闭视图、重复朗读与自动播报对应的手势"
+            app:iconSpaceReserved="false" />
 
         <!-- 3. 语音交互 -->
         <SwitchPreferenceCompat
             android:key="feature_shortcut_voice_enabled"
             android:title="语音交互"
-            android:summary="开启后可自定义导航、播报控制与退出等指令，适配不同用语习惯。" />
+            android:summary="开启后可自定义导航、播报控制与退出等指令，适配不同用语习惯。"
+            app:iconSpaceReserved="false" />
 
         <Preference
             android:key="pref_voice_config"
             android:title="语音指令配置"
-            android:summary="设置切换下一个或上一个焦点、播报摘要、重复朗读、自动播报与退出功能对应的语音指令"/>
+            android:summary="设置切换下一个或上一个焦点、播报摘要、重复朗读、自动播报与退出功能对应的语音指令"
+            app:iconSpaceReserved="false" />
     </PreferenceCategory>
 
     <!-- 其他功能开关 -->

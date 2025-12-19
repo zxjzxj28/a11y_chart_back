@@ -3,7 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <PreferenceCategory
-        android:title="音量按键触发">
+        android:title="音量按键触发"
+        app:iconSpaceReserved="false">
 
         <ListPreference
             android:key="volume_combo_pattern"
@@ -11,13 +12,15 @@
             android:entries="@array/vol_pattern_entries"
             android:entryValues="@array/vol_pattern_values"
             android:defaultValue="BOTH"
-            android:summary="%s" />
+            android:summary="%s"
+            app:iconSpaceReserved="false" />
 
         <EditTextPreference
             android:key="volume_combo_window_ms"
             android:title="组合时间窗口（毫秒）"
             android:dialogTitle="输入 100~2000 的毫秒数"
             android:defaultValue="500"
-            app:useSimpleSummaryProvider="true" />
+            app:useSimpleSummaryProvider="true"
+            app:iconSpaceReserved="false" />
     </PreferenceCategory>
 </PreferenceScreen>
