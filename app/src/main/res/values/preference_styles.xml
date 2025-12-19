@@ -7,10 +7,13 @@
     </style>
 
     <style name="PreferenceCategoryStyle.Androidtools" parent="@style/Preference.Category.Material">
-        <item name="android:textColor">@color/text_accent</item>
+        <item name="android:textColor">@color/text_primary</item>
         <item name="android:textStyle">bold</item>
+        <item name="android:textSize">@dimen/text_size_category_title</item>
         <item name="android:paddingStart">@dimen/preference_item_padding_start</item>
         <item name="android:paddingEnd">@dimen/preference_item_padding_end</item>
+        <item name="allowDividerAbove">false</item>
+        <item name="allowDividerBelow">false</item>
     </style>
 
     <style name="PreferenceStyle.Androidtools" parent="@style/Preference.Material">
