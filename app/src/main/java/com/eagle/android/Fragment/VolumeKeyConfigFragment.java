@@ -1,18 +1,22 @@
 package com.eagle.android.Fragment;
 
 import android.os.Bundle;
+import android.view.View;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.preference.EditTextPreference;
 import androidx.preference.ListPreference;
 import androidx.preference.PreferenceFragmentCompat;
 
 import com.eagle.android.R;
+import com.eagle.android.util.PreferenceListStyler;
 
 public class VolumeKeyConfigFragment extends PreferenceFragmentCompat {
 
     @Override
     public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
         getPreferenceManager().setSharedPreferencesName("a11y_prefs");
+        requireActivity().setTitle(R.string.title_activity_volume_key_config);
         setPreferencesFromResource(R.xml.prefs_volume_key, rootKey);
 
         // 给“时间窗口 ms”做个输入限制（可选，简单校验）
@@ -27,6 +31,11 @@ public class VolumeKeyConfigFragment extends PreferenceFragmentCompat {
                     return false;
                 }
             });
+            win.setSummaryProvider(preference -> {
+                String val = preference.getText();
+                if (val == null || val.isEmpty()) return "未设置";
+                return val + " 毫秒";
+            });
         }
 
         // pattern 下拉（不做额外处理，这里只存值）
@@ -34,5 +43,11 @@ public class VolumeKeyConfigFragment extends PreferenceFragmentCompat {
         if (pattern != null) {
             pattern.setSummaryProvider(ListPreference.SimpleSummaryProvider.getInstance());
         }
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        PreferenceListStyler.apply(this);
     }
 }

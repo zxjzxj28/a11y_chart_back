@@ -1,0 +1,10 @@
+<resources>
+    <style name="PreferenceThemeOverlay.Androidtools" parent="@style/PreferenceThemeOverlay.v14.Material">
+        <item name="preferenceCategoryStyle">@style/PreferenceCategoryStyle.Androidtools</item>
+    </style>
+
+    <style name="PreferenceCategoryStyle.Androidtools" parent="@style/Preference.Category.Material">
+        <item name="android:textColor">@color/text_accent</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+</resources>

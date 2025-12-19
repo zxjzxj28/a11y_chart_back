@@ -1,12 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- 这里用单选；若你要支持多选可改成 MultiSelectListPreference -->
-    <ListPreference
-        android:key="a11y_gesture_choice"
-        android:title="选择手势"
-        android:entries="@array/gesture_entries"
-        android:entryValues="@array/gesture_values"
-        android:defaultValue="SWIPE_UP"
-        android:summary="%s" />
+    <PreferenceCategory android:title="手势映射">
+
+        <ListPreference
+            android:key="gesture_close_action"
+            android:title="视图关闭手势"
+            android:entries="@array/gesture_close_entries"
+            android:entryValues="@array/gesture_close_values"
+            android:defaultValue="SWIPE_DOWN_LEFT"
+            android:summary="%s" />
+
+        <ListPreference
+            android:key="gesture_repeat_action"
+            android:title="重复播报手势"
+            android:entries="@array/gesture_repeat_entries"
+            android:entryValues="@array/gesture_repeat_values"
+            android:defaultValue="ONE_FINGER_DOUBLE_TAP"
+            android:summary="%s" />
+
+        <ListPreference
+            android:key="gesture_auto_broadcast_action"
+            android:title="自动播报手势"
+            android:entries="@array/gesture_auto_entries"
+            android:entryValues="@array/gesture_auto_values"
+            android:defaultValue="THREE_FINGER_SWIPE"
+            android:summary="%s" />
+    </PreferenceCategory>
 </PreferenceScreen>

@@ -103,13 +103,24 @@ public class ChartA11yService extends AccessibilityService {
         System.out.println("chartVoiceQA:" +  chartVoiceQA + "sortByData:" + sortByData );
 
 // 具体参数
-        String volPattern = sp.getString("volume_combo_pattern", "UP+DOWN");
-        int volWindowMs   = Integer.parseInt(sp.getString("volume_combo_window_ms", "500"));
+        volPattern = sp.getString("volume_combo_pattern", "BOTH");
+        volWindowMs   = Integer.parseInt(sp.getString("volume_combo_window_ms", "500"));
         System.out.println("volPattern:" +  volPattern + "volWindowMs:" + volWindowMs );
 
-        String voicePhrase = sp.getString("voice_trigger_phrase", "打开图表");
-        String gestureChoice = sp.getString("a11y_gesture_choice", "SWIPE_UP");
-        System.out.println("voicePhrase:" +  voicePhrase + "gestureChoice:" + gestureChoice );
+        String gestureClose = sp.getString("gesture_close_action", "SWIPE_DOWN_LEFT");
+        String gestureRepeat = sp.getString("gesture_repeat_action", "ONE_FINGER_DOUBLE_TAP");
+        String gestureAuto = sp.getString("gesture_auto_broadcast_action", "THREE_FINGER_SWIPE");
+        String prevCommand = sp.getString("voice_command_prev_focus", "上一个");
+        String nextCommand = sp.getString("voice_command_next_focus", "下一个");
+        String repeatCommand = sp.getString("voice_command_repeat", "重复朗读");
+        String summaryCommand = sp.getString("voice_command_summary", "播放摘要");
+        String autoCommand = sp.getString("voice_command_auto", "自动播报");
+        String exitCommand = sp.getString("voice_command_exit", "退出");
+        System.out.println("gestureClose:" + gestureClose + " gestureRepeat:" + gestureRepeat +
+                " gestureAuto:" + gestureAuto);
+        System.out.println("prevCommand:" + prevCommand + " nextCommand:" + nextCommand +
+                " repeatCommand:" + repeatCommand + " summaryCommand:" + summaryCommand +
+                " autoCommand:" + autoCommand + " exitCommand:" + exitCommand);
         AccessibilityServiceInfo info = getServiceInfo();
         info.flags |= android.accessibilityservice.AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS;
         setServiceInfo(info);
@@ -183,7 +194,7 @@ public class ChartA11yService extends AccessibilityService {
         }
         return super.onStartCommand(intent, flags, startId);
     }
-    private String volPattern = "UP+DOWN";
+    private String volPattern = "BOTH";
     private int volWindowMs = 1000;
     private int longPressMs = 500;
     private static final long TOGGLE_COOLDOWN_MS = 800;
@@ -208,7 +219,15 @@ public class ChartA11yService extends AccessibilityService {
             return false;
         }
         volPattern = getSharedPreferences("a11y_prefs", MODE_PRIVATE)
-                .getString("volume_combo_pattern", "UP+DOWN");
+                .getString("volume_combo_pattern", "BOTH");
+        try {
+            volWindowMs = Integer.parseInt(
+                    getSharedPreferences("a11y_prefs", MODE_PRIVATE)
+                            .getString("volume_combo_window_ms", String.valueOf(volWindowMs))
+            );
+        } catch (NumberFormatException e) {
+            volWindowMs = 500;
+        }
 
 //        if (event.getAction() != KeyEvent.ACTION_DOWN) {
 //            return false;
@@ -225,9 +244,10 @@ public class ChartA11yService extends AccessibilityService {
 //                    System.out.println("首次按下up");
                 } else if (event.getRepeatCount() > 0 && !upLongFired) {
                     // 部分 ROM 会在长按时产生 repeat
-                    triggerIfMatch("UP_LONG");
-//                    System.out.println("长按up");
-                    upLongFired = true;
+                    if ("LONG".equals(volPattern)) {
+                        triggerIfMatch("LONG");
+                        upLongFired = true;
+                    }
                 }
             } else { // VOLUME_DOWN
                 if (!downDownPressed) {
@@ -236,8 +256,10 @@ public class ChartA11yService extends AccessibilityService {
                     scheduleLong("DOWN");
                 } else if (event.getRepeatCount() > 0 && !downLongFired) {
 //                    System.out.println("长按down");
-                    triggerIfMatch("DOWN_LONG");
-                    downLongFired = true;
+                    if ("LONG".equals(volPattern)) {
+                        triggerIfMatch("LONG");
+                        downLongFired = true;
+                    }
                 }
             }
         } else if (action == KeyEvent.ACTION_UP) {
@@ -250,7 +272,7 @@ public class ChartA11yService extends AccessibilityService {
             }
         }
 
-        // ---- 短按序列（UP+DOWN / DOWN+UP / UPx2 / DOWNx2）----
+        // ---- 短按序列（同时按下/双击）----
         // 只在 "按下" 的瞬间记录一次
         if (action == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
             String token = (code == KeyEvent.KEYCODE_VOLUME_UP) ? "UP" : "DOWN";
@@ -258,28 +280,13 @@ public class ChartA11yService extends AccessibilityService {
             pruneOldHits(now);
 
             // 顺序组合
-            if ("UP+DOWN".equals(volPattern)) {
-                System.out.println("UP+DOWN");
-                if (matchTwo("UP", "DOWN")) {
-//                    System.out.println("UP+DOWN");
-                    triggerIfMatch("UP+DOWN");
-                };
-            } else if ("DOWN+UP".equals(volPattern)) {
-                if (matchTwo("DOWN", "UP")){
-//                    System.out.println("DOWN+UP");
-                    triggerIfMatch("DOWN+UP");
+            if ("BOTH".equals(volPattern)) {
+                if (matchBothDirections()) {
+                    triggerIfMatch("BOTH");
                 }
-            }
-            // 双击
-            else if ("UPx2".equals(volPattern)) {
-                if (matchDouble("UP")){
-//                    System.out.println("UPx2");
-                    triggerIfMatch("UPx2");
-                }
-            } else if ("DOWNx2".equals(volPattern)) {
-                if (matchDouble("DOWN")){
-//                    System.out.println("DOWNx2");
-                    triggerIfMatch("DOWNx2");
+            } else if ("DOUBLE".equals(volPattern)) {
+                if (matchDouble("UP") || matchDouble("DOWN")) {
+                    triggerIfMatch("DOUBLE");
                 }
             }
             // 长按在定时器/重复里处理
@@ -296,13 +303,6 @@ public class ChartA11yService extends AccessibilityService {
         }
     }
 
-    private boolean matchTwo(String a, String b) {
-        if (volHits.size() < 2) return false;
-        KeyHit[] arr = volHits.toArray(new KeyHit[0]);
-        int n = arr.length;
-        return a.equals(arr[n-2].token) && b.equals(arr[n-1].token);
-    }
-
     private boolean matchDouble(String x) {
         if (volHits.size() < 2) return false;
         KeyHit[] arr = volHits.toArray(new KeyHit[0]);
@@ -310,10 +310,22 @@ public class ChartA11yService extends AccessibilityService {
         return x.equals(arr[n-2].token) && x.equals(arr[n-1].token);
     }
 
+    private boolean matchBothDirections() {
+        if (volHits.size() < 2) return false;
+        KeyHit[] arr = volHits.toArray(new KeyHit[0]);
+        int n = arr.length;
+        String first = arr[n - 2].token;
+        String second = arr[n - 1].token;
+        return !first.equals(second)
+                && (("UP".equals(first) && "DOWN".equals(second))
+                || ("DOWN".equals(first) && "UP".equals(second)));
+    }
+
     private void scheduleLong(String which) {
-        if ("UP".equals(which) && "UP_LONG".equals(volPattern)) {
+        if (!"LONG".equals(volPattern)) return;
+        if ("UP".equals(which)) {
             volHandler.postDelayed(upLongRunnable, longPressMs);
-        } else if ("DOWN".equals(which) && "DOWN_LONG".equals(volPattern)) {
+        } else if ("DOWN".equals(which)) {
             volHandler.postDelayed(downLongRunnable, longPressMs);
         }
     }
@@ -325,22 +337,20 @@ public class ChartA11yService extends AccessibilityService {
 
     private final Runnable upLongRunnable = () -> {
         if (!upLongFired) {
-            triggerIfMatch("UP_LONG");
+            triggerIfMatch("LONG");
             upLongFired = true;
         }
     };
     private final Runnable downLongRunnable = () -> {
         if (!downLongFired) {
-            triggerIfMatch("DOWN_LONG");
+            triggerIfMatch("LONG");
             downLongFired = true;
         }
     };
 
     private void triggerIfMatch(String matched) {
         // 只有匹配当前设置的项才触发
-        System.out.println("判断");
         if (!matched.equals(volPattern)) return;
-        System.out.println("符合逻辑");
         long now = SystemClock.uptimeMillis();
         if (now - lastToggleAt < TOGGLE_COOLDOWN_MS) return; // 冷却
         lastToggleAt = now;
