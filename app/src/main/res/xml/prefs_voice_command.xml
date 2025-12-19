@@ -2,10 +2,27 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <EditTextPreference
-        android:key="voice_trigger_phrase"
-        android:title="触发口令（≤4 个字）"
-        android:dialogTitle="输入不超过 4 个字的口令"
-        app:useSimpleSummaryProvider="true"
-        android:defaultValue="打开图表" />
+    <PreferenceCategory android:title="语音指令">
+
+        <EditTextPreference
+            android:key="voice_command_navigation"
+            android:title="导航指令"
+            android:dialogTitle="输入导航口令，多个用、或逗号分隔"
+            app:useSimpleSummaryProvider="true"
+            android:defaultValue="下一个、上一个" />
+
+        <EditTextPreference
+            android:key="voice_command_playback"
+            android:title="播报控制指令"
+            android:dialogTitle="输入播报控制口令，多个用、或逗号分隔"
+            app:useSimpleSummaryProvider="true"
+            android:defaultValue="重复朗读、播放摘要、自动播报" />
+
+        <EditTextPreference
+            android:key="voice_command_exit"
+            android:title="退出指令"
+            android:dialogTitle="输入退出口令，可设置多个同义表达"
+            app:useSimpleSummaryProvider="true"
+            android:defaultValue="退出" />
+    </PreferenceCategory>
 </PreferenceScreen>

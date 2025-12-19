@@ -13,6 +13,7 @@ public class VolumeKeyConfigFragment extends PreferenceFragmentCompat {
     @Override
     public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
         getPreferenceManager().setSharedPreferencesName("a11y_prefs");
+        requireActivity().setTitle(R.string.title_activity_volume_key_config);
         setPreferencesFromResource(R.xml.prefs_volume_key, rootKey);
 
         // 给“时间窗口 ms”做个输入限制（可选，简单校验）
@@ -26,6 +27,11 @@ public class VolumeKeyConfigFragment extends PreferenceFragmentCompat {
                 } catch (Exception e) {
                     return false;
                 }
+            });
+            win.setSummaryProvider(preference -> {
+                String val = preference.getText();
+                if (val == null || val.isEmpty()) return "未设置";
+                return val + " 毫秒";
             });
         }
 

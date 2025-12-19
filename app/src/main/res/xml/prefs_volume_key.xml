@@ -2,18 +2,22 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <ListPreference
-        android:key="volume_combo_pattern"
-        android:title="触发模式"
-        android:entries="@array/vol_pattern_entries"
-        android:entryValues="@array/vol_pattern_values"
-        android:defaultValue="UP+DOWN"
-        android:summary="%s" />
+    <PreferenceCategory
+        android:title="音量按键触发">
 
-    <EditTextPreference
-        android:key="volume_combo_window_ms"
-        android:title="组合时间窗口（毫秒）"
-        android:dialogTitle="输入 100~2000 的毫秒数"
-        android:defaultValue="500"
-        app:useSimpleSummaryProvider="true" />
+        <ListPreference
+            android:key="volume_combo_pattern"
+            android:title="触发模式"
+            android:entries="@array/vol_pattern_entries"
+            android:entryValues="@array/vol_pattern_values"
+            android:defaultValue="UP+DOWN"
+            android:summary="%s" />
+
+        <EditTextPreference
+            android:key="volume_combo_window_ms"
+            android:title="组合时间窗口（毫秒）"
+            android:dialogTitle="输入 100~2000 的毫秒数"
+            android:defaultValue="500"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
 </PreferenceScreen>
