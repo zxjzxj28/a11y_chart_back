@@ -1,10 +1,21 @@
 <resources>
     <style name="PreferenceThemeOverlay.Androidtools" parent="@style/PreferenceThemeOverlay.v14.Material">
         <item name="preferenceCategoryStyle">@style/PreferenceCategoryStyle.Androidtools</item>
+        <item name="preferenceStyle">@style/PreferenceStyle.Androidtools</item>
+        <item name="android:listPreferredItemPaddingStart">@dimen/preference_item_padding_start</item>
+        <item name="android:listPreferredItemPaddingEnd">@dimen/preference_item_padding_end</item>
     </style>
 
     <style name="PreferenceCategoryStyle.Androidtools" parent="@style/Preference.Category.Material">
         <item name="android:textColor">@color/text_accent</item>
         <item name="android:textStyle">bold</item>
+        <item name="android:paddingStart">@dimen/preference_item_padding_start</item>
+        <item name="android:paddingEnd">@dimen/preference_item_padding_end</item>
+    </style>
+
+    <style name="PreferenceStyle.Androidtools" parent="@style/Preference.Material">
+        <item name="android:paddingStart">@dimen/preference_item_padding_start</item>
+        <item name="android:paddingEnd">@dimen/preference_item_padding_end</item>
+        <item name="android:minHeight">56dp</item>
     </style>
 </resources>
