@@ -27,6 +27,11 @@ public class VolumeKeyConfigFragment extends PreferenceFragmentCompat {
                     return false;
                 }
             });
+            win.setSummaryProvider(preference -> {
+                String val = preference.getText();
+                if (val == null || val.isEmpty()) return "未设置";
+                return val + " 毫秒";
+            });
         }
 
         // pattern 下拉（不做额外处理，这里只存值）

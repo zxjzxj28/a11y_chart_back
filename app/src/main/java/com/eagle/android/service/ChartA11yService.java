@@ -103,13 +103,20 @@ public class ChartA11yService extends AccessibilityService {
         System.out.println("chartVoiceQA:" +  chartVoiceQA + "sortByData:" + sortByData );
 
 // 具体参数
-        String volPattern = sp.getString("volume_combo_pattern", "UP+DOWN");
-        int volWindowMs   = Integer.parseInt(sp.getString("volume_combo_window_ms", "500"));
+        volPattern = sp.getString("volume_combo_pattern", "UP+DOWN");
+        volWindowMs   = Integer.parseInt(sp.getString("volume_combo_window_ms", "500"));
         System.out.println("volPattern:" +  volPattern + "volWindowMs:" + volWindowMs );
 
-        String voicePhrase = sp.getString("voice_trigger_phrase", "打开图表");
-        String gestureChoice = sp.getString("a11y_gesture_choice", "SWIPE_UP");
-        System.out.println("voicePhrase:" +  voicePhrase + "gestureChoice:" + gestureChoice );
+        String gestureClose = sp.getString("gesture_close_action", "SWIPE_DOWN_LEFT");
+        String gestureRepeat = sp.getString("gesture_repeat_action", "ONE_FINGER_DOUBLE_TAP");
+        String gestureAuto = sp.getString("gesture_auto_broadcast_action", "THREE_FINGER_SWIPE");
+        String navCommands = sp.getString("voice_command_navigation", "下一个、上一个");
+        String playbackCommands = sp.getString("voice_command_playback", "重复朗读、播放摘要、自动播报");
+        String exitCommands = sp.getString("voice_command_exit", "退出");
+        System.out.println("gestureClose:" + gestureClose + " gestureRepeat:" + gestureRepeat +
+                " gestureAuto:" + gestureAuto);
+        System.out.println("navCommands:" + navCommands + " playbackCommands:" + playbackCommands +
+                " exitCommands:" + exitCommands);
         AccessibilityServiceInfo info = getServiceInfo();
         info.flags |= android.accessibilityservice.AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS;
         setServiceInfo(info);
@@ -209,6 +216,14 @@ public class ChartA11yService extends AccessibilityService {
         }
         volPattern = getSharedPreferences("a11y_prefs", MODE_PRIVATE)
                 .getString("volume_combo_pattern", "UP+DOWN");
+        try {
+            volWindowMs = Integer.parseInt(
+                    getSharedPreferences("a11y_prefs", MODE_PRIVATE)
+                            .getString("volume_combo_window_ms", String.valueOf(volWindowMs))
+            );
+        } catch (NumberFormatException e) {
+            volWindowMs = 500;
+        }
 
 //        if (event.getAction() != KeyEvent.ACTION_DOWN) {
 //            return false;
