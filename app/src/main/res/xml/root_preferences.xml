@@ -12,7 +12,9 @@
 
         <Preference
             android:key="pref_volume_config"
-            android:title="音量按键配置" />
+            android:title="音量按键配置"
+            android:summary="设置音量键触发方式（同时按下、双击、长按）" />
+
 
         <!-- 2. 手势交互 -->
         <SwitchPreferenceCompat
@@ -22,7 +24,8 @@
 
         <Preference
             android:key="pref_gesture_config"
-            android:title="手势映射配置" />
+            android:title="手势映射配置"
+            android:summary="设置关闭视图、重复朗读与自动播报对应的手势"/>
 
         <!-- 3. 语音交互 -->
         <SwitchPreferenceCompat
@@ -32,21 +35,22 @@
 
         <Preference
             android:key="pref_voice_config"
-            android:title="语音指令配置" />
+            android:title="语音指令配置"
+            android:summary="设置切换下一个或上一个焦点、播报摘要、重复朗读、自动播报与退出功能对应的语音指令"/>
     </PreferenceCategory>
 
     <!-- 其他功能开关 -->
-    <PreferenceCategory android:title="其他体验">
+<!--    <PreferenceCategory android:title="其他体验">-->
 
-        <SwitchPreferenceCompat
-            android:key="feature_chart_voice_qa_enabled"
-            android:title="开启语音图表问答"
-            android:summary="允许通过语音与图表进行问答交互" />
+<!--        <SwitchPreferenceCompat-->
+<!--            android:key="feature_chart_voice_qa_enabled"-->
+<!--            android:title="开启语音图表问答"-->
+<!--            android:summary="允许通过语音与图表进行问答交互" />-->
 
-        <SwitchPreferenceCompat
-            android:key="feature_sort_by_data_enabled"
-            android:title="按照数据排序"
-            android:summary="开启后，按数据值而非布局顺序进行排序" />
-    </PreferenceCategory>
+<!--        <SwitchPreferenceCompat-->
+<!--            android:key="feature_sort_by_data_enabled"-->
+<!--            android:title="按照数据排序"-->
+<!--            android:summary="开启后，按数据值而非布局顺序进行排序" />-->
+<!--    </PreferenceCategory>-->
 
 </PreferenceScreen>
