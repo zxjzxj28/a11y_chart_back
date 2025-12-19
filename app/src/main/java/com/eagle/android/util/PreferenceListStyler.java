@@ -60,8 +60,8 @@ public final class PreferenceListStyler {
                                    @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
             int position = parent.getChildAdapterPosition(view);
             int itemCount = state.getItemCount();
-            // Add space below each item except the last one
-            if (position < itemCount - 1) {
+            // Add space below each item except the first (category header) and last one
+            if (position > 0 && position < itemCount - 1) {
                 outRect.bottom = dividerHeight;
             }
         }
@@ -78,8 +78,8 @@ public final class PreferenceListStyler {
             for (int i = 0; i < childCount; i++) {
                 View child = parent.getChildAt(i);
                 int position = parent.getChildAdapterPosition(child);
-                // Don't draw divider after last item
-                if (position >= state.getItemCount() - 1) continue;
+                // Don't draw divider after category header (position 0) or last item
+                if (position == 0 || position >= state.getItemCount() - 1) continue;
 
                 RecyclerView.LayoutParams params =
                         (RecyclerView.LayoutParams) child.getLayoutParams();
