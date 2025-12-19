@@ -7,49 +7,49 @@
         <!-- 1. 音量键交互 -->
         <SwitchPreferenceCompat
             android:key="feature_shortcut_volume_enabled"
-            android:title="音量键交互"
-            android:summary="使用音量键唤起或控制图表。开启后可在子页设置触发模式。" />
+            android:title="音量按键交互"
+            android:summary="开启后，系统将按配置的触发方式，使用音量按键唤出或关闭图表访问视图" />
 
         <Preference
             android:key="pref_volume_config"
             android:title="音量按键配置"
-            android:summary="默认：音量上下键同时按下（500ms 内）。支持双击或长按等模式。" />
+            android:summary="设置音量键触发方式（同时按下、双击、长按）" />
 
         <!-- 2. 手势交互 -->
         <SwitchPreferenceCompat
             android:key="feature_shortcut_gesture_enabled"
             android:title="手势交互"
-            android:summary="开启可为关闭视图、重复播报、自动播报分别映射合适的无障碍手势。" />
+            android:summary="开启后，在图表访问视图内，系统支持手势导航与关闭并可触发重复朗读和自动播报。" />
 
         <Preference
             android:key="pref_gesture_config"
             android:title="手势映射配置"
-            android:summary="默认：向下向左滑动关闭视图，单指双击重复播报，三指滑动自动播报。" />
+            android:summary="设置关闭视图、重复朗读与自动播报对应的手势" />
 
         <!-- 3. 语音交互 -->
         <SwitchPreferenceCompat
             android:key="feature_shortcut_voice_enabled"
             android:title="语音交互"
-            android:summary="开启后可自定义导航、播报控制与退出等指令，适配不同用语习惯。" />
+            android:summary="开启后，说出“访问图表”唤出图表访问视图，并可用语音指令完成导航、播报控制与退出" />
 
         <Preference
             android:key="pref_voice_config"
             android:title="语音指令配置"
-            android:summary="默认：导航“下一个/上一个”，播报“重复朗读/播放摘要/自动播报”，退出“退出”。" />
+            android:summary="设置切换下一个或上一个焦点、播报摘要、重复朗读、自动播报与退出功能对应的语音指令" />
     </PreferenceCategory>
 
     <!-- 其他功能开关 -->
-    <PreferenceCategory android:title="其他体验">
+<!--    <PreferenceCategory android:title="其他体验">-->
 
-        <SwitchPreferenceCompat
-            android:key="feature_chart_voice_qa_enabled"
-            android:title="开启语音图表问答"
-            android:summary="允许通过语音与图表进行问答交互" />
+<!--        <SwitchPreferenceCompat-->
+<!--            android:key="feature_chart_voice_qa_enabled"-->
+<!--            android:title="开启语音图表问答"-->
+<!--            android:summary="允许通过语音与图表进行问答交互" />-->
 
-        <SwitchPreferenceCompat
-            android:key="feature_sort_by_data_enabled"
-            android:title="按照数据排序"
-            android:summary="开启后，按数据值而非布局顺序进行排序" />
-    </PreferenceCategory>
+<!--        <SwitchPreferenceCompat-->
+<!--            android:key="feature_sort_by_data_enabled"-->
+<!--            android:title="按照数据排序"-->
+<!--            android:summary="开启后，按数据值而非布局顺序进行排序" />-->
+<!--    </PreferenceCategory>-->
 
 </PreferenceScreen>
