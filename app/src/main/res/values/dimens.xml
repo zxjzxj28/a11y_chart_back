@@ -29,4 +29,7 @@
 
     <!-- 图表图像 -->
     <dimen name="chart_image_max_height">120dp</dimen>
+
+    <!-- 设置页列表内边距 -->
+    <dimen name="preference_list_padding_horizontal">12dp</dimen>
 </resources>

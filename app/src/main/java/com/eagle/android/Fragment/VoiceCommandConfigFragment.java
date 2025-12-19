@@ -2,12 +2,15 @@ package com.eagle.android.Fragment;
 
 import android.os.Bundle;
 import android.text.InputFilter;
+import android.view.View;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.preference.EditTextPreference;
 import androidx.preference.PreferenceFragmentCompat;
 
 import com.eagle.android.R;
+import com.eagle.android.util.PreferenceListStyler;
 
 public class VoiceCommandConfigFragment extends PreferenceFragmentCompat {
 
@@ -23,6 +26,12 @@ public class VoiceCommandConfigFragment extends PreferenceFragmentCompat {
         setupCommandPreference("voice_command_summary", 20);
         setupCommandPreference("voice_command_auto", 20);
         setupCommandPreference("voice_command_exit", 20);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        PreferenceListStyler.apply(this);
     }
 
     private void setupCommandPreference(String key, int maxLen) {

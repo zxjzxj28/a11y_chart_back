@@ -3,6 +3,8 @@ package com.eagle.android.a11y;
 import android.content.Intent;
 import android.os.Bundle;
 
+import android.view.View;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
@@ -11,6 +13,7 @@ import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
 
 import com.eagle.android.R;
+import com.eagle.android.util.PreferenceListStyler;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -69,6 +72,12 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 });
             }
+        }
+
+        @Override
+        public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+            super.onViewCreated(view, savedInstanceState);
+            PreferenceListStyler.apply(this);
         }
     }
 }

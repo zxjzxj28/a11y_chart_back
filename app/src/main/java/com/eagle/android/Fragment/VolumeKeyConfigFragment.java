@@ -1,12 +1,15 @@
 package com.eagle.android.Fragment;
 
 import android.os.Bundle;
+import android.view.View;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.preference.EditTextPreference;
 import androidx.preference.ListPreference;
 import androidx.preference.PreferenceFragmentCompat;
 
 import com.eagle.android.R;
+import com.eagle.android.util.PreferenceListStyler;
 
 public class VolumeKeyConfigFragment extends PreferenceFragmentCompat {
 
@@ -40,5 +43,11 @@ public class VolumeKeyConfigFragment extends PreferenceFragmentCompat {
         if (pattern != null) {
             pattern.setSummaryProvider(ListPreference.SimpleSummaryProvider.getInstance());
         }
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        PreferenceListStyler.apply(this);
     }
 }

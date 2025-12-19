@@ -1,11 +1,14 @@
 package com.eagle.android.Fragment;
 
 import android.os.Bundle;
+import android.view.View;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.preference.ListPreference;
 import androidx.preference.PreferenceFragmentCompat;
 
 import com.eagle.android.R;
+import com.eagle.android.util.PreferenceListStyler;
 
 public class GestureConfigFragment extends PreferenceFragmentCompat {
 
@@ -18,6 +21,12 @@ public class GestureConfigFragment extends PreferenceFragmentCompat {
         bindSummary("gesture_close_action");
         bindSummary("gesture_repeat_action");
         bindSummary("gesture_auto_broadcast_action");
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        PreferenceListStyler.apply(this);
     }
 
     private void bindSummary(String key) {
