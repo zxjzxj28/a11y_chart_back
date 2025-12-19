@@ -2,11 +2,7 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- 自定义交互总览 -->
-    <PreferenceCategory android:title="屏幕朗读相关设置">
-
-        <Preference
-            android:selectable="false"
-            android:summary="为音量键、手势与语音交互提供独立开关与入口，按照 TalkBack/VoiceOver 的层级化配置风格进行管理。" />
+    <PreferenceCategory android:title="图表访问交互相关设置">
 
         <!-- 1. 音量键交互 -->
         <SwitchPreferenceCompat
@@ -17,8 +13,7 @@
         <Preference
             android:key="pref_volume_config"
             android:title="音量按键配置"
-            android:summary="默认：音量上下键同时按下（500ms 内）。支持双击或长按等模式。"
-            android:enabled="false" />
+            android:summary="默认：音量上下键同时按下（500ms 内）。支持双击或长按等模式。" />
 
         <!-- 2. 手势交互 -->
         <SwitchPreferenceCompat
@@ -29,8 +24,7 @@
         <Preference
             android:key="pref_gesture_config"
             android:title="手势映射配置"
-            android:summary="默认：向下向左滑动关闭视图，单指双击重复播报，三指滑动自动播报。"
-            android:enabled="false" />
+            android:summary="默认：向下向左滑动关闭视图，单指双击重复播报，三指滑动自动播报。" />
 
         <!-- 3. 语音交互 -->
         <SwitchPreferenceCompat
@@ -41,8 +35,7 @@
         <Preference
             android:key="pref_voice_config"
             android:title="语音指令配置"
-            android:summary="默认：导航“下一个/上一个”，播报“重复朗读/播放摘要/自动播报”，退出“退出”。"
-            android:enabled="false" />
+            android:summary="默认：导航“下一个/上一个”，播报“重复朗读/播放摘要/自动播报”，退出“退出”。" />
     </PreferenceCategory>
 
     <!-- 其他功能开关 -->
