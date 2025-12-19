@@ -9,21 +9,16 @@
         <item>reply</item>
         <item>reply_all</item>
     </string-array>
+
     <string-array name="vol_pattern_entries">
-        <item>音量上 + 音量下</item>
-        <item>音量下 + 音量上</item>
-        <item>双击音量上</item>
-        <item>双击音量下</item>
-        <item>长按音量上</item>
-        <item>长按音量下</item>
+        <item>同时按下音量上下键（默认）</item>
+        <item>双击音量按键</item>
+        <item>长按音量按键</item>
     </string-array>
     <string-array name="vol_pattern_values">
-        <item>UP+DOWN</item>
-        <item>DOWN+UP</item>
-        <item>UPx2</item>
-        <item>DOWNx2</item>
-        <item>UP_LONG</item>
-        <item>DOWN_LONG</item>
+        <item>BOTH</item>
+        <item>DOUBLE</item>
+        <item>LONG</item>
     </string-array>
     <string-array name="gesture_entries">
         <item>上滑</item>
@@ -44,5 +39,35 @@
         <item>SWIPE_DOWN_AND_UP</item>
         <item>SWIPE_LEFT_AND_RIGHT</item>
         <item>SWIPE_RIGHT_AND_LEFT</item>
+    </string-array>
+
+    <string-array name="gesture_close_entries">
+        <item>向下向左滑动（默认）</item>
+        <item>三指双击</item>
+    </string-array>
+
+    <string-array name="gesture_close_values">
+        <item>SWIPE_DOWN_LEFT</item>
+        <item>THREE_FINGER_DOUBLE_TAP</item>
+    </string-array>
+
+    <string-array name="gesture_repeat_entries">
+        <item>单指双击（默认）</item>
+        <item>双指双击</item>
+    </string-array>
+
+    <string-array name="gesture_repeat_values">
+        <item>ONE_FINGER_DOUBLE_TAP</item>
+        <item>TWO_FINGER_DOUBLE_TAP</item>
+    </string-array>
+
+    <string-array name="gesture_auto_entries">
+        <item>三指滑动（默认）</item>
+        <item>双指上下滑动</item>
+    </string-array>
+
+    <string-array name="gesture_auto_values">
+        <item>THREE_FINGER_SWIPE</item>
+        <item>TWO_FINGER_VERTICAL_SWIPE</item>
     </string-array>
 </resources>

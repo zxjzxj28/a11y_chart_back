@@ -23,6 +23,8 @@
     <color name="text_secondary">#333333</color>
     <color name="text_tertiary">#666666</color>
     <color name="text_hint">#888888</color>
-    <color name="text_accent">#1E88E5</color>
+    <color name="text_accent">#0A84FF</color>
+    <color name="switch_thumb_off">#E0E0E0</color>
+    <color name="switch_track_off">#BDBDBD</color>
     <color name="text_chart_title">#444444</color>
 </resources>

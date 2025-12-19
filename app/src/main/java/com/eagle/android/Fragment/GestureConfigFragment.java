@@ -12,9 +12,16 @@ public class GestureConfigFragment extends PreferenceFragmentCompat {
     @Override
     public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
         getPreferenceManager().setSharedPreferencesName("a11y_prefs");
+        requireActivity().setTitle(R.string.title_activity_gesture_config);
         setPreferencesFromResource(R.xml.prefs_gesture, rootKey);
 
-        ListPreference lp = findPreference("a11y_gesture_choice");
+        bindSummary("gesture_close_action");
+        bindSummary("gesture_repeat_action");
+        bindSummary("gesture_auto_broadcast_action");
+    }
+
+    private void bindSummary(String key) {
+        ListPreference lp = findPreference(key);
         if (lp != null) {
             lp.setSummaryProvider(ListPreference.SimpleSummaryProvider.getInstance());
         }
