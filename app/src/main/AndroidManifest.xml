@@ -21,12 +21,15 @@
         tools:targetApi="31">
         <activity
             android:name=".a11y.GestureConfigActivity"
+            android:label="@string/title_activity_gesture_config"
             android:exported="false" />
         <activity
             android:name=".a11y.VoiceCommandConfigActivity"
+            android:label="@string/title_activity_voice_command_config"
             android:exported="false" />
         <activity
             android:name=".a11y.VolumeKeyConfigActivity"
+            android:label="@string/title_activity_volume_key_config"
             android:exported="false" />
         <activity
             android:name=".a11y.SettingsActivity"

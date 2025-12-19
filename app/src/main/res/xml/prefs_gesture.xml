@@ -3,10 +3,6 @@
 
     <PreferenceCategory android:title="手势映射">
 
-        <Preference
-            android:selectable="false"
-            android:summary="为常用操作分配手势，遵循 TalkBack/VoiceOver 的习惯配置：向下向左关闭，单指双击重复播报，三指滑动自动播报。" />
-
         <ListPreference
             android:key="gesture_close_action"
             android:title="视图关闭手势"

@@ -14,7 +14,7 @@
     启用服务后，当页面存在可访问图表时，系统会语音提示"当前页面有可访问图表"。您可通过音量键、语音指令或无障碍快捷按钮唤出图表访问视图。
     </string>
     <string name="my_text">Click <a href="http://www.baidu.com">here</a> to visit our website.</string>
-    <string name="title_activity_settings">SettingsActivity</string>
+    <string name="title_activity_settings">屏幕朗读设置</string>
     <string name="open_chart_preview">查看示例图表</string>
     <string name="show_mock_access_overlay">展示无障碍悬浮视图（示例数据）</string>
     <string name="chart_preview_content_desc">在1980年，数量为114</string>
@@ -34,7 +34,9 @@
     <string name="attachment_summary_on">Automatically download attachments for incoming emails
     </string>
     <string name="attachment_summary_off">Only download attachments when manually requested</string>
-    <string name="title_activity_volume_key_config">VolumeKeyConfigActivity</string>
+    <string name="title_activity_volume_key_config">音量按键配置</string>
+    <string name="title_activity_gesture_config">手势映射配置</string>
+    <string name="title_activity_voice_command_config">语音指令配置</string>
     <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">First Fragment</string>
     <string name="second_fragment_label">Second Fragment</string>

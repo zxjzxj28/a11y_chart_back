@@ -4,29 +4,46 @@
 
     <PreferenceCategory android:title="语音指令">
 
-        <Preference
-            android:selectable="false"
-            android:summary="为导航、播报控制和退出分别设置口令，可用顿号/逗号分隔多个表达，便于适配不同说法。" />
+        <EditTextPreference
+            android:key="voice_command_prev_focus"
+            android:title="切换上一个焦点"
+            android:dialogTitle="输入单个口令"
+            android:defaultValue="上一个"
+            app:useSimpleSummaryProvider="true" />
 
         <EditTextPreference
-            android:key="voice_command_navigation"
-            android:title="导航指令"
-            android:dialogTitle="输入导航口令，多个用、或逗号分隔"
-            app:useSimpleSummaryProvider="true"
-            android:defaultValue="下一个、上一个" />
+            android:key="voice_command_next_focus"
+            android:title="切换下一个焦点"
+            android:dialogTitle="输入单个口令"
+            android:defaultValue="下一个"
+            app:useSimpleSummaryProvider="true" />
 
         <EditTextPreference
-            android:key="voice_command_playback"
-            android:title="播报控制指令"
-            android:dialogTitle="输入播报控制口令，多个用、或逗号分隔"
-            app:useSimpleSummaryProvider="true"
-            android:defaultValue="重复朗读、播放摘要、自动播报" />
+            android:key="voice_command_repeat"
+            android:title="重复朗读"
+            android:dialogTitle="输入单个口令"
+            android:defaultValue="重复朗读"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            android:key="voice_command_summary"
+            android:title="播放摘要"
+            android:dialogTitle="输入单个口令"
+            android:defaultValue="播放摘要"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            android:key="voice_command_auto"
+            android:title="自动播报"
+            android:dialogTitle="输入单个口令"
+            android:defaultValue="自动播报"
+            app:useSimpleSummaryProvider="true" />
 
         <EditTextPreference
             android:key="voice_command_exit"
             android:title="退出指令"
-            android:dialogTitle="输入退出口令，可设置多个同义表达"
-            app:useSimpleSummaryProvider="true"
-            android:defaultValue="退出" />
+            android:dialogTitle="输入单个口令"
+            android:defaultValue="退出"
+            app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 </PreferenceScreen>

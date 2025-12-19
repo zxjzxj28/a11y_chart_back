@@ -5,6 +5,9 @@
         <item name="colorPrimary">@color/text_accent</item>
         <item name="colorSecondary">@color/text_accent</item>
         <item name="colorControlActivated">@color/text_accent</item>
+        <item name="colorControlNormal">@color/switch_track_off</item>
+        <item name="colorSwitchThumbNormal">@color/switch_thumb_off</item>
+        <item name="colorAccent">@color/text_accent</item>
         <item name="preferenceTheme">@style/PreferenceThemeOverlay.Androidtools</item>
     </style>
 

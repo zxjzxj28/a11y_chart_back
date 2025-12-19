@@ -12,6 +12,7 @@ public class GestureConfigFragment extends PreferenceFragmentCompat {
     @Override
     public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
         getPreferenceManager().setSharedPreferencesName("a11y_prefs");
+        requireActivity().setTitle(R.string.title_activity_gesture_config);
         setPreferencesFromResource(R.xml.prefs_gesture, rootKey);
 
         bindSummary("gesture_close_action");

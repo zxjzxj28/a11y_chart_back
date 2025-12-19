@@ -9,21 +9,16 @@
         <item>reply</item>
         <item>reply_all</item>
     </string-array>
+
     <string-array name="vol_pattern_entries">
-        <item>音量上 + 音量下（默认，500ms 内）</item>
-        <item>音量下 + 音量上</item>
-        <item>双击音量上</item>
-        <item>双击音量下</item>
-        <item>长按音量上</item>
-        <item>长按音量下</item>
+        <item>同时按下音量上下键（默认）</item>
+        <item>双击音量按键</item>
+        <item>长按音量按键</item>
     </string-array>
     <string-array name="vol_pattern_values">
-        <item>UP+DOWN</item>
-        <item>DOWN+UP</item>
-        <item>UPx2</item>
-        <item>DOWNx2</item>
-        <item>UP_LONG</item>
-        <item>DOWN_LONG</item>
+        <item>BOTH</item>
+        <item>DOUBLE</item>
+        <item>LONG</item>
     </string-array>
     <string-array name="gesture_entries">
         <item>上滑</item>
