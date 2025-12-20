@@ -6,10 +6,20 @@
         <item name="android:listPreferredItemPaddingEnd">@dimen/preference_item_padding_end</item>
     </style>
 
-    <style name="PreferenceCategoryStyle.Androidtools" parent="@style/Preference.Category.Material">
+    <!--
+         Text appearance used by all PreferenceCategory titles in the settings
+         hierarchy (including the main "图表访问交互相关设置" section and sub-pages
+         like "音量按键触发"). Adjust @dimen/text_size_category_title to change
+         their font size across the board.
+    -->
+    <style name="PreferenceCategoryTextAppearance.Androidtools" parent="@style/TextAppearance.Material3.BodyMedium">
         <item name="android:textColor">@color/text_primary</item>
         <item name="android:textStyle">bold</item>
         <item name="android:textSize">@dimen/text_size_category_title</item>
+    </style>
+
+    <style name="PreferenceCategoryStyle.Androidtools" parent="@style/Preference.Category.Material">
+        <item name="android:textAppearance">@style/PreferenceCategoryTextAppearance.Androidtools</item>
         <item name="android:paddingStart">@dimen/preference_item_padding_start</item>
         <item name="android:paddingEnd">@dimen/preference_item_padding_end</item>
         <item name="allowDividerAbove">false</item>
