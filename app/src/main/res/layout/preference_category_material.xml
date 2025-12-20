@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/title"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingStart="@dimen/preference_item_padding_start"
+    android:paddingEnd="@dimen/preference_item_padding_end"
+    android:paddingTop="16dp"
+    android:paddingBottom="8dp"
+    android:textColor="@color/text_accent"
+    android:textSize="@dimen/text_size_category_title"
+    android:textStyle="bold" />
