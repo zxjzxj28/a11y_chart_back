@@ -22,14 +22,14 @@
 
     <!-- 字号 -->
     <dimen name="text_size_category_title">16sp</dimen>
-    <dimen name="text_size_title">13sp</dimen>
+    <dimen name="text_size_title">21sp</dimen>
     <dimen name="text_size_value">14sp</dimen>
     <dimen name="text_size_body">13sp</dimen>
     <dimen name="text_size_label">11sp</dimen>
     <dimen name="text_size_hint">10sp</dimen>
 
     <!-- 图表图像 -->
-    <dimen name="chart_image_max_height">120dp</dimen>
+    <dimen name="chart_image_max_height">210dp</dimen>
 
     <!-- 设置页列表内边距 -->
     <dimen name="preference_list_padding_horizontal">16dp</dimen>

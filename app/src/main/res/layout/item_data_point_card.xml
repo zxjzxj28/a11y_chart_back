@@ -26,7 +26,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textSize="@dimen/text_size_title"
+            android:textSize="18sp"
             android:textColor="@color/text_primary"
             android:textStyle="bold"
             tools:text="1月"/>
@@ -35,7 +35,7 @@
             android:id="@+id/data_value"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="@dimen/text_size_value"
+            android:textSize="18sp"
             android:textColor="@color/text_accent"
             android:textStyle="bold"
             tools:text="45万元"/>
@@ -46,7 +46,7 @@
         android:id="@+id/data_description"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="@dimen/text_size_label"
+        android:textSize="14sp"
         android:textColor="@color/text_tertiary"
         android:lineSpacingMultiplier="1.4"
         android:layout_marginTop="4dp"

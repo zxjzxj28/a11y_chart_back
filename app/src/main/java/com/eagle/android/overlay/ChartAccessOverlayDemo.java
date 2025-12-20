@@ -27,7 +27,7 @@ public final class ChartAccessOverlayDemo {
      */
     public static ChartInfo createMockChartInfo(Context context) {
         ChartInfo chartInfo = new ChartInfo();
-        chartInfo.setSummary("这是一个描述支出构成的饼图，其中服务类占比最高，达到69.94%，交通占比最低，仅为0.13%，最高与最低相差约70个百分点，餐饮和转账分别占10.96%和10.17%，发红包占6.57%，而娱乐和交通合计不足3%，整体支出主要集中于服务类开销。");
+        chartInfo.setSummary("这张饼图展示了不同支出项目的占比情况。整体平均占比约16.7%，其中服务占比最高达69.94%，交通占比最低仅0.13%，两者相差约69.7个百分点。分布呈现明显集中特征，主要集中于服务项目，其他项目占比相对较小。");
         chartInfo.setChartTitle("图表");
         chartInfo.setDataPoints(createMockDataPoints());
         chartInfo.setChartImage(loadChartBitmap(context));
