@@ -14,6 +14,7 @@
 
     <!-- 边框色 -->
     <color name="border_normal">#DDDDDD</color>
+    <color name="border_chart">#9E9E9E</color>
     <color name="border_focused">#4A9EFF</color>
     <color name="border_data_point">#CDD7E3</color>
     <color name="border_exit_focused">#FF6B6B</color>
