@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Path;
 import android.graphics.Rect;
+import android.graphics.Region;
 import android.hardware.HardwareBuffer;
 import android.os.Build;
 import android.os.Handler;
@@ -51,6 +52,15 @@ public class ChartA11yService extends AccessibilityService {
     public static final String ACTION_SHOW_MOCK_ACCESS_OVERLAY =
             "com.eagle.android.service.action.SHOW_MOCK_ACCESS_OVERLAY";
 
+    // ============ 新增：多指手势回调接口 ============
+    public interface ChartGestureCallback {
+        void onTwoFingerDoubleTap();
+        void onThreeFingerDoubleTap();
+        void onTwoFingerSwipe(int direction); // 0左 1右 2上 3下
+        void onThreeFingerSwipe(int direction);
+    }
+
+    private ChartGestureCallback chartGestureCallback;
     private ChartPanelWindow panel;
     private AccessibilityButtonController ab;
     private AccessibilityButtonController.AccessibilityButtonCallback abCb;
@@ -88,8 +98,53 @@ public class ChartA11yService extends AccessibilityService {
     @Override
     public void onServiceConnected() {
         super.onServiceConnected();
-        // tap模拟点击操作
-        panel = new ChartPanelWindow(this, this::tap);
+
+        mainHandler = new Handler(Looper.getMainLooper());
+
+        // 创建手势回调
+        chartGestureCallback = new ChartGestureCallback() {
+            @Override
+            public void onTwoFingerDoubleTap() {
+                // 双指双击 - 播放/暂停摘要
+                mainHandler.post(() -> {
+                    Toast.makeText(ChartA11yService.this, "双指双击：播放摘要", Toast.LENGTH_SHORT).show();
+                    // TODO: 实现摘要播放逻辑
+                });
+            }
+
+            @Override
+            public void onThreeFingerDoubleTap() {
+                // 三指双击 - 自动播报开关
+                mainHandler.post(() -> {
+                    Toast.makeText(ChartA11yService.this, "三指双击：自动播报", Toast.LENGTH_SHORT).show();
+                    // TODO: 实现自动播报逻辑
+                });
+            }
+
+            @Override
+            public void onTwoFingerSwipe(int direction) {
+                mainHandler.post(() -> {
+                    String[] dirs = {"左", "右", "上", "下"};
+                    Toast.makeText(ChartA11yService.this, "双指" + dirs[direction] + "滑", Toast.LENGTH_SHORT).show();
+
+                    if (direction == 3) { // 下滑退出
+                        exitChartMode();
+                    }
+                });
+            }
+
+            @Override
+            public void onThreeFingerSwipe(int direction) {
+                mainHandler.post(() -> {
+                    String[] dirs = {"左", "右", "上", "下"};
+                    Toast.makeText(ChartA11yService.this, "三指" + dirs[direction] + "滑", Toast.LENGTH_SHORT).show();
+                    // TODO: 实现三指滑动逻辑
+                });
+            }
+        };
+
+        // tap模拟点击操作 - 修改为传入手势回调
+        panel = new ChartPanelWindow(this, this::tap, chartGestureCallback);
         SharedPreferences sp = getSharedPreferences("a11y_prefs", MODE_PRIVATE);
 
 // 顶层开关
@@ -174,7 +229,6 @@ public class ChartA11yService extends AccessibilityService {
 //        simpleOverLay.show();
 //        simpleOverLay.setNodesExposed(true);
 //        simpleOverLay.setOverlayFocusable(false);
-        mainHandler = new Handler(Looper.getMainLooper());
 //        showFixedVirtualNode();
 
         // （可选）保留系统无障碍按钮入口
@@ -384,9 +438,14 @@ public class ChartA11yService extends AccessibilityService {
         demoAccessOverlayManager = ChartAccessOverlayDemo.showMockOverlay(this);
     }
 
+    // ============ 修改 onDestroy 方法 ============
     @Override
     public void onDestroy() {
         super.onDestroy();
+
+        // 确保清理手势直通
+        disableGesturePassthrough();
+
         if (ab != null && abCb != null) ab.unregisterAccessibilityButtonCallback(abCb);
         io.shutdownNow();
         if (demoAccessOverlayManager != null && demoAccessOverlayManager.isShowing()) {
@@ -511,9 +570,12 @@ public class ChartA11yService extends AccessibilityService {
 
     @Override public void onInterrupt() { }
 
-    // —— 仍保留原按钮触发逻辑（方便手动测试）——
+    // ============ 修改 togglePanel 方法 ============
     private void togglePanel() {
-        if (panel.isShowing()) { panel.hide(); return; }
+        if (panel.isShowing()) {
+            exitChartMode(); // 使用新方法
+            return;
+        }
         enterChartMode();
 //        takeScreenshotSafe(bmp -> {
 //            if (bmp == null) { Toast.makeText(this, "未获取到屏幕", Toast.LENGTH_SHORT).show(); return; }
@@ -618,12 +680,46 @@ public class ChartA11yService extends AccessibilityService {
 //        if (hintOverlay != null && hintOverlay.isShowing()) hintOverlay.hide();
     }
 
+    // ============ 新增：设置手势直通区域 ============
+    private void enableGesturePassthrough() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            int width = getResources().getDisplayMetrics().widthPixels;
+            int height = getResources().getDisplayMetrics().heightPixels;
+            Rect rect = new Rect(0, 0, width, height);
+            Region region = new Region(rect);
+
+            // 只设置手势检测直通，保留触摸探索（单指焦点切换）
+            setGestureDetectionPassthroughRegion(Display.DEFAULT_DISPLAY, region);
+        }
+    }
+
+    private void disableGesturePassthrough() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            setGestureDetectionPassthroughRegion(Display.DEFAULT_DISPLAY, new Region());
+        }
+    }
+
+    // ============ 修改 enterChartMode 方法 ============
     private void enterChartMode() {
         if (lastChartRect == null || lastNodes == null || lastChartBmp == null) return;
-//        if (hintOverlay.isShowing()) hintOverlay.hide();
+
+        // 启用手势直通
+        enableGesturePassthrough();
+
         if (!panel.isShowing()) {
             panel.show(lastChartBmp, lastChartRect, lastNodes);
         }
         Toast.makeText(this, "已进入图表模式", Toast.LENGTH_SHORT).show();
+    }
+
+    // ============ 新增：退出图表模式方法 ============
+    private void exitChartMode() {
+        // 禁用手势直通
+        disableGesturePassthrough();
+
+        if (panel != null && panel.isShowing()) {
+            panel.hide();
+        }
+        Toast.makeText(this, "已退出图表模式", Toast.LENGTH_SHORT).show();
     }
 }

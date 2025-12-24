@@ -10,6 +10,7 @@ import android.view.WindowManager;
 import android.widget.FrameLayout;
 
 import com.eagle.android.model.NodeSpec;
+import com.eagle.android.service.ChartA11yService;
 
 import java.util.List;
 
@@ -17,13 +18,18 @@ public class ChartPanelWindow {
     private final Context ctx;
     private final WindowManager wm;
     private final Tapper tapper;
+    private final ChartA11yService.ChartGestureCallback gestureCallback;
     private ChartPanelView view;
     private WindowManager.LayoutParams lp;
 
     public interface Tapper { boolean tap(int x, int y); }
 
-    public ChartPanelWindow(Context c, Tapper t) {
-        this.ctx = c; this.tapper = t; this.wm = (WindowManager)c.getSystemService(Context.WINDOW_SERVICE);
+    // 修改构造函数，添加手势回调参数
+    public ChartPanelWindow(Context c, Tapper t, ChartA11yService.ChartGestureCallback gestureCallback) {
+        this.ctx = c;
+        this.tapper = t;
+        this.gestureCallback = gestureCallback;
+        this.wm = (WindowManager) c.getSystemService(Context.WINDOW_SERVICE);
     }
 
     public boolean isShowing() { return view != null; }
@@ -35,7 +41,8 @@ public class ChartPanelWindow {
     public void show(Bitmap bmp, Rect chartRectOnScreen, List<NodeSpec> nodes, CharSequence summary) {
         if (view != null) { update(bmp, chartRectOnScreen, nodes, summary); return; }
 
-        view = new ChartPanelView(ctx, tapper, this::hide);
+        // 传入手势回调
+        view = new ChartPanelView(ctx, tapper, this::hide, gestureCallback);
 
         final int W = ctx.getResources().getDisplayMetrics().widthPixels;
         final int H = ctx.getResources().getDisplayMetrics().heightPixels;
