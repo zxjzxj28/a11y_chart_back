@@ -42,13 +42,15 @@ public class ChartPanelView extends FrameLayout {
     private final int minTopPad, minBottomPad;
 
     // ============ 新增：多指手势检测变量 ============
-    private int activePointers = 0;
-    private long multiDownTime = 0;
-    private final float[][] startXY = new float[3][2];
-    private long lastMultiTapTime = 0;
-    private int lastMultiTapCount = 0;
+    private int maxPointers = 0;  // 本次手势中出现的最大手指数
+    private long gestureStartTime = 0;
+    private final float[][] startXY = new float[10][2];  // 支持最多10根手指
+    private long lastTapUpTime = 0;
+    private int lastTapFingerCount = 0;
     private static final long DOUBLE_TAP_TIMEOUT = 300;
     private static final float SWIPE_THRESHOLD = 100f;
+    private static final long TAP_TIMEOUT = 250;  // 轻触最大持续时间
+    private boolean isSwipeDetected = false;  // 是否已检测到滑动
 
     // 修改构造函数
     public ChartPanelView(Context ctx, ChartPanelWindow.Tapper tapper, Runnable onExit,
@@ -165,46 +167,54 @@ public class ChartPanelView extends FrameLayout {
 
         switch (action) {
             case MotionEvent.ACTION_DOWN:
-                activePointers = 1;
-                multiDownTime = event.getEventTime();
+                // 新手势开始
+                maxPointers = 1;
+                gestureStartTime = event.getEventTime();
+                isSwipeDetected = false;
                 startXY[0][0] = event.getX(0);
                 startXY[0][1] = event.getY(0);
                 break;
 
             case MotionEvent.ACTION_POINTER_DOWN:
-                activePointers = pointerCount;
-                if (pointerCount <= 3) {
-                    multiDownTime = event.getEventTime();
-                    for (int i = 0; i < pointerCount; i++) {
-                        startXY[i][0] = event.getX(i);
-                        startXY[i][1] = event.getY(i);
+                // 记录新增的手指
+                maxPointers = Math.max(maxPointers, pointerCount);
+                int newPointerIndex = event.getActionIndex();
+                if (newPointerIndex < startXY.length) {
+                    startXY[newPointerIndex][0] = event.getX(newPointerIndex);
+                    startXY[newPointerIndex][1] = event.getY(newPointerIndex);
+                }
+                break;
+
+            case MotionEvent.ACTION_MOVE:
+                // 检测滑动（在移动过程中）
+                if (!isSwipeDetected && maxPointers >= 2) {
+                    isSwipeDetected = detectSwipe(event);
+                    if (isSwipeDetected) {
+                        return true; // 消费滑动事件
                     }
                 }
                 break;
 
             case MotionEvent.ACTION_POINTER_UP:
-                if (activePointers >= 2) {
-                    boolean handled = handleMultiFingerUp(event);
-                    activePointers = pointerCount - 1;
-                    if (handled) {
-                        return true; // 消费多指事件
-                    }
-                }
+                // 有手指抬起，但还有其他手指按下
+                // 不在这里处理，等到所有手指都抬起
                 break;
 
             case MotionEvent.ACTION_UP:
-                if (activePointers >= 2) {
-                    boolean handled = handleMultiFingerUp(event);
-                    activePointers = 0;
+                // 所有手指都抬起，检测手势
+                if (maxPointers >= 2) {
+                    boolean handled = handleMultiFingerGesture(event);
+                    maxPointers = 0;
                     if (handled) {
                         return true;
                     }
                 }
-                activePointers = 0;
+                maxPointers = 0;
                 break;
 
             case MotionEvent.ACTION_CANCEL:
-                activePointers = 0;
+                maxPointers = 0;
+                isSwipeDetected = false;
                 break;
         }
 
@@ -212,47 +222,77 @@ public class ChartPanelView extends FrameLayout {
         return super.dispatchTouchEvent(event);
     }
 
-    private boolean handleMultiFingerUp(MotionEvent event) {
+    /**
+     * 在 ACTION_MOVE 时检测滑动手势
+     */
+    private boolean detectSwipe(MotionEvent event) {
         if (gestureCallback == null) return false;
 
-        long duration = event.getEventTime() - multiDownTime;
-        int fingers = activePointers;
+        // 计算所有活跃手指的平均移动距离
+        int activeCount = Math.min(event.getPointerCount(), maxPointers);
+        float totalDx = 0, totalDy = 0;
 
-        // 计算移动距离
-        float dx = 0, dy = 0;
-        if (event.getPointerCount() > 0) {
-            dx = event.getX(0) - startXY[0][0];
-            dy = event.getY(0) - startXY[0][1];
+        for (int i = 0; i < activeCount; i++) {
+            if (i < startXY.length) {
+                totalDx += event.getX(i) - startXY[i][0];
+                totalDy += event.getY(i) - startXY[i][1];
+            }
         }
 
-        float distance = (float) Math.sqrt(dx * dx + dy * dy);
+        float avgDx = totalDx / activeCount;
+        float avgDy = totalDy / activeCount;
+        float distance = (float) Math.sqrt(avgDx * avgDx + avgDy * avgDy);
 
-        if (distance < SWIPE_THRESHOLD && duration < 250) {
-            // 轻触（可能是双击的一部分）
-            long now = System.currentTimeMillis();
-            if (now - lastMultiTapTime < DOUBLE_TAP_TIMEOUT && lastMultiTapCount == fingers) {
-                // 双击
-                if (fingers == 2) {
+        // 如果移动距离超过阈值，触发滑动
+        if (distance >= SWIPE_THRESHOLD) {
+            int direction = getDirection(avgDx, avgDy);
+
+            if (maxPointers == 2) {
+                gestureCallback.onTwoFingerSwipe(direction);
+                return true;
+            } else if (maxPointers == 3) {
+                gestureCallback.onThreeFingerSwipe(direction);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * 在 ACTION_UP 时处理多指手势（主要是双击）
+     */
+    private boolean handleMultiFingerGesture(MotionEvent event) {
+        if (gestureCallback == null) return false;
+
+        // 如果已经检测到滑动，不再处理双击
+        if (isSwipeDetected) {
+            return true;
+        }
+
+        long gestureDuration = event.getEventTime() - gestureStartTime;
+
+        // 检查是否是轻触（短时间且没有大幅移动）
+        if (gestureDuration < TAP_TIMEOUT) {
+            // 检测双击
+            long timeSinceLastTap = event.getEventTime() - lastTapUpTime;
+
+            if (timeSinceLastTap < DOUBLE_TAP_TIMEOUT && lastTapFingerCount == maxPointers) {
+                // 这是双击！
+                if (maxPointers == 2) {
                     gestureCallback.onTwoFingerDoubleTap();
-                } else if (fingers == 3) {
+                } else if (maxPointers == 3) {
                     gestureCallback.onThreeFingerDoubleTap();
                 }
-                lastMultiTapTime = 0;
-                lastMultiTapCount = 0;
+                // 重置双击状态
+                lastTapUpTime = 0;
+                lastTapFingerCount = 0;
                 return true;
             } else {
-                lastMultiTapTime = now;
-                lastMultiTapCount = fingers;
+                // 这是第一次轻触，记录状态等待可能的第二次
+                lastTapUpTime = event.getEventTime();
+                lastTapFingerCount = maxPointers;
             }
-        } else if (distance >= SWIPE_THRESHOLD) {
-            // 滑动
-            int direction = getDirection(dx, dy);
-            if (fingers == 2) {
-                gestureCallback.onTwoFingerSwipe(direction);
-            } else if (fingers == 3) {
-                gestureCallback.onThreeFingerSwipe(direction);
-            }
-            return true;
         }
 
         return false;
