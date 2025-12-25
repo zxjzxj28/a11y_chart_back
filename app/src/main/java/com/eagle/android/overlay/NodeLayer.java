@@ -4,18 +4,17 @@ import android.content.Context;
 import android.graphics.*;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.view.GestureDetector;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.accessibility.AccessibilityEvent;
+import android.widget.Toast;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 import androidx.customview.widget.ExploreByTouchHelper;
 import com.eagle.android.model.NodeSpec;
 import java.util.*;
 public class NodeLayer extends View {
+    private static final String TAG = "NodeLayer";
     private final ChartPanelWindow.Tapper tapper;
     private final Paint focusPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private Bitmap chartBmp;
@@ -26,34 +25,24 @@ public class NodeLayer extends View {
     private final Rect imageDstLocal = new Rect();
     private float scale = 1f;
 
-
     private Rect focusedScreenRect = null;
 
-    // ============ 无障碍事件可视化相关 ============
+    // ============ 无障碍事件回调接口 ============
     public interface AccessibilityEventCallback {
         void onDoubleTap(float x, float y);
         void onLongPress(float x, float y);
-        void onScroll(float distanceX, float distanceY, int direction);
+        void onScroll(int direction); // 0=向前, 1=向后
     }
 
     private AccessibilityEventCallback eventCallback;
-    private final GestureDetector gestureDetector;
-    private final Handler handler = new Handler(Looper.getMainLooper());
-
-    // 事件可视化绘制
-    private final Paint eventPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private String currentEventText = null;
-    private float eventX, eventY;
-    private long eventShowTime = 0;
-    private static final long EVENT_DISPLAY_DURATION = 1500; // 事件显示1.5秒
-
-    // 滚动事件累积
-    private float accumulatedScrollX = 0;
-    private float accumulatedScrollY = 0;
-    private static final float SCROLL_THRESHOLD = 50f; // 滚动阈值
 
     public void setAccessibilityEventCallback(AccessibilityEventCallback callback) {
         this.eventCallback = callback;
+    }
+
+    private void showEvent(String eventName) {
+        Log.d(TAG, "无障碍事件: " + eventName);
+        Toast.makeText(getContext(), eventName, Toast.LENGTH_SHORT).show();
     }
 
 
@@ -89,28 +78,67 @@ public class NodeLayer extends View {
             Rect local = mapScreenRectToLocalInt(n.rectScreen);
             info.setBoundsInParent(local);
             info.setContentDescription(n.label);
+
+            // 添加无障碍动作：点击（双击触发）、长按、滚动
             info.addAction(AccessibilityNodeInfoCompat.ACTION_CLICK);
+            info.addAction(AccessibilityNodeInfoCompat.ACTION_LONG_CLICK);
+            info.addAction(AccessibilityNodeInfoCompat.ACTION_SCROLL_FORWARD);
+            info.addAction(AccessibilityNodeInfoCompat.ACTION_SCROLL_BACKWARD);
 
             info.setClassName("android.view.View");
             info.setPackageName(getContext().getPackageName());
 
-            info.setFocusable(true); info.setClickable(true);
+            info.setFocusable(true);
+            info.setClickable(true);
+            info.setLongClickable(true);
+            info.setScrollable(true);
         }
         // 设置对每一个虚拟子节点的无障碍操作如何响应
         @Override protected boolean onPerformActionForVirtualView(int id, int action, Bundle args) {
             NodeSpec n = null;
             for (NodeSpec it : nodes) if (it.id == id) { n = it; break; }
             if (n == null) return false;
+
+            Rect local = n != null ? mapScreenRectToLocalInt(n.rectScreen) : new Rect();
+            float centerX = local.centerX();
+            float centerY = local.centerY();
+
             if (action == AccessibilityNodeInfoCompat.ACTION_CLICK) {
-                System.out.println("点击到了" + n.label);
+                // 双击事件（TalkBack双击触发ACTION_CLICK）
+                showEvent("双击: " + n.label);
+                if (eventCallback != null) {
+                    eventCallback.onDoubleTap(centerX, centerY);
+                }
 
                 boolean ok = tapper.tap(n.rectScreen.centerX(), n.rectScreen.centerY());
                 if (ok) {
                     sendEventForVirtualView(id, android.view.accessibility.AccessibilityEvent.TYPE_VIEW_CLICKED);
                 }
                 return ok;
+            } else if (action == AccessibilityNodeInfoCompat.ACTION_LONG_CLICK) {
+                // 长按事件
+                showEvent("长按: " + n.label);
+                if (eventCallback != null) {
+                    eventCallback.onLongPress(centerX, centerY);
+                }
+                sendEventForVirtualView(id, android.view.accessibility.AccessibilityEvent.TYPE_VIEW_LONG_CLICKED);
+                return true;
+            } else if (action == AccessibilityNodeInfoCompat.ACTION_SCROLL_FORWARD) {
+                // 滚动向前事件（不实际滚动）
+                showEvent("滚动向前");
+                if (eventCallback != null) {
+                    eventCallback.onScroll(0); // 0=向前
+                }
+                return true; // 返回true但不实际滚动
+            } else if (action == AccessibilityNodeInfoCompat.ACTION_SCROLL_BACKWARD) {
+                // 滚动向后事件（不实际滚动）
+                showEvent("滚动向后");
+                if (eventCallback != null) {
+                    eventCallback.onScroll(1); // 1=向后
+                }
+                return true; // 返回true但不实际滚动
             } else if (action == AccessibilityNodeInfoCompat.ACTION_ACCESSIBILITY_FOCUS) {
-                System.out.println("聚焦到了" + n.label);
+                Log.d(TAG, "聚焦到了" + n.label);
                 focusedScreenRect = n.rectScreen; invalidate(); return true;
             } else if (action == AccessibilityNodeInfoCompat.ACTION_CLEAR_ACCESSIBILITY_FOCUS) {
                 focusedScreenRect = null; invalidate(); return true;
@@ -125,112 +153,10 @@ public class NodeLayer extends View {
         focusPaint.setStrokeWidth(6f);
         focusPaint.setColor(Color.argb(220, 30, 144, 255));
 
-        // 初始化事件可视化画笔
-        eventPaint.setTextSize(48f);
-        eventPaint.setColor(Color.WHITE);
-        eventPaint.setTextAlign(Paint.Align.CENTER);
-
-        // 初始化手势检测器
-        gestureDetector = new GestureDetector(ctx, new GestureDetector.SimpleOnGestureListener() {
-            @Override
-            public boolean onDoubleTap(MotionEvent e) {
-                showEventVisual("双击", e.getX(), e.getY());
-                if (eventCallback != null) {
-                    eventCallback.onDoubleTap(e.getX(), e.getY());
-                }
-                // 发送无障碍事件通知
-                announceForAccessibility("双击事件");
-                return true;
-            }
-
-            @Override
-            public void onLongPress(MotionEvent e) {
-                showEventVisual("长按", e.getX(), e.getY());
-                if (eventCallback != null) {
-                    eventCallback.onLongPress(e.getX(), e.getY());
-                }
-                // 发送无障碍事件通知
-                announceForAccessibility("长按事件");
-            }
-
-            @Override
-            public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-                // 累积滚动距离
-                accumulatedScrollX += distanceX;
-                accumulatedScrollY += distanceY;
-
-                // 当累积达到阈值时触发滚动事件（但不真正滚动视图）
-                if (Math.abs(accumulatedScrollX) > SCROLL_THRESHOLD || Math.abs(accumulatedScrollY) > SCROLL_THRESHOLD) {
-                    int direction = getScrollDirection(accumulatedScrollX, accumulatedScrollY);
-                    String dirText = getScrollDirectionText(direction);
-                    showEventVisual("滚动 " + dirText, e2.getX(), e2.getY());
-
-                    if (eventCallback != null) {
-                        eventCallback.onScroll(accumulatedScrollX, accumulatedScrollY, direction);
-                    }
-                    // 发送无障碍事件通知
-                    announceForAccessibility("滚动" + dirText);
-
-                    // 重置累积
-                    accumulatedScrollX = 0;
-                    accumulatedScrollY = 0;
-                }
-                // 返回true消费事件，不让视图真正滚动
-                return true;
-            }
-
-            @Override
-            public boolean onDown(MotionEvent e) {
-                // 重置滚动累积
-                accumulatedScrollX = 0;
-                accumulatedScrollY = 0;
-                return true;
-            }
-
-            @Override
-            public boolean onSingleTapConfirmed(MotionEvent e) {
-                // 单击不处理，让默认行为继续
-                return false;
-            }
-        });
-
         ViewCompat.setImportantForAccessibility(this, ViewCompat.IMPORTANT_FOR_ACCESSIBILITY_YES);
         setFocusable(true);
         setFocusableInTouchMode(true);
         ViewCompat.setAccessibilityDelegate(this, a11yHelper);
-    }
-
-    private int getScrollDirection(float dx, float dy) {
-        if (Math.abs(dx) > Math.abs(dy)) {
-            return dx > 0 ? 0 : 1; // 0=左(手指向右滑), 1=右(手指向左滑)
-        } else {
-            return dy > 0 ? 2 : 3; // 2=上(手指向下滑), 3=下(手指向上滑)
-        }
-    }
-
-    private String getScrollDirectionText(int direction) {
-        switch (direction) {
-            case 0: return "向左";
-            case 1: return "向右";
-            case 2: return "向上";
-            case 3: return "向下";
-            default: return "";
-        }
-    }
-
-    private void showEventVisual(String text, float x, float y) {
-        currentEventText = text;
-        eventX = x;
-        eventY = y;
-        eventShowTime = System.currentTimeMillis();
-        invalidate();
-
-        // 1.5秒后清除事件显示
-        handler.removeCallbacksAndMessages(null);
-        handler.postDelayed(() -> {
-            currentEventText = null;
-            invalidate();
-        }, EVENT_DISPLAY_DURATION);
     }
 
 
@@ -302,29 +228,6 @@ public class NodeLayer extends View {
             RectF local = mapScreenRectToLocal(focusedScreenRect);
             c.drawRect(local, focusPaint);
         }
-
-        // 绘制事件可视化
-        if (currentEventText != null) {
-            long elapsed = System.currentTimeMillis() - eventShowTime;
-            if (elapsed < EVENT_DISPLAY_DURATION) {
-                // 计算渐变透明度
-                float alpha = 1f - (elapsed / (float) EVENT_DISPLAY_DURATION);
-                int baseAlpha = (int) (200 * alpha);
-
-                // 绘制圆形背景
-                Paint bgPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-                bgPaint.setColor(Color.argb(baseAlpha, 0, 122, 255));
-                float radius = 80f + (elapsed / 10f); // 扩散效果
-                c.drawCircle(eventX, eventY, radius, bgPaint);
-
-                // 绘制事件文字
-                eventPaint.setAlpha((int) (255 * alpha));
-                c.drawText(currentEventText, eventX, eventY + 15, eventPaint);
-
-                // 继续刷新动画
-                postInvalidateDelayed(16);
-            }
-        }
     }
     @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Override
@@ -346,26 +249,18 @@ public class NodeLayer extends View {
     }
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        // 先让手势检测器处理（用于双击、长按、滚动检测）
-        boolean handled = gestureDetector.onTouchEvent(event);
-
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
-                // ✅ 关键：拿住事件流，避免穿透
+                // 拿住事件流，避免穿透
                 return true;
 
             case MotionEvent.ACTION_UP: {
-                // 如果手势检测器已经处理了（如双击、长按），则不再处理点击
-                if (handled) {
-                    return true;
-                }
-
                 int virtualId = hitTestVirtualId(event.getX(), event.getY());
                 if (virtualId != ExploreByTouchHelper.INVALID_ID) {
                     androidx.core.view.accessibility.AccessibilityNodeProviderCompat p =
                             ViewCompat.getAccessibilityNodeProvider(this);
                     if (p != null) {
-                        // ✅ 转成无障碍点击，最终会回到 onPerformActionForVirtualView()
+                        // 转成无障碍点击，最终会回到 onPerformActionForVirtualView()
                         boolean ok = p.performAction(
                                 virtualId,
                                 AccessibilityNodeInfoCompat.ACTION_CLICK,
@@ -378,7 +273,7 @@ public class NodeLayer extends View {
             }
 
             case MotionEvent.ACTION_MOVE:
-                // 滚动事件由手势检测器处理，返回true阻止视图滚动
+                // 返回true阻止视图滚动
                 return true;
         }
         return super.onTouchEvent(event);

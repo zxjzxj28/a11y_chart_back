@@ -320,20 +320,20 @@ public class ChartPanelView extends FrameLayout {
         nodeLayer.setAccessibilityEventCallback(new NodeLayer.AccessibilityEventCallback() {
             @Override
             public void onDoubleTap(float x, float y) {
-                // 双击事件：可以触发播放摘要等操作
-                System.out.println("ChartPanelView: 检测到双击事件 at (" + x + ", " + y + ")");
+                // 双击事件（TalkBack双击触发）
+                System.out.println("ChartPanelView: 双击事件 at (" + x + ", " + y + ")");
             }
 
             @Override
             public void onLongPress(float x, float y) {
-                // 长按事件：可以触发更多操作菜单等
-                System.out.println("ChartPanelView: 检测到长按事件 at (" + x + ", " + y + ")");
+                // 长按事件（TalkBack长按触发）
+                System.out.println("ChartPanelView: 长按事件 at (" + x + ", " + y + ")");
             }
 
             @Override
-            public void onScroll(float distanceX, float distanceY, int direction) {
-                // 滚动事件：可以用于导航数据点等
-                System.out.println("ChartPanelView: 检测到滚动事件 direction=" + direction);
+            public void onScroll(int direction) {
+                // 滚动事件（0=向前, 1=向后）- 不实际滚动视图
+                System.out.println("ChartPanelView: 滚动事件 direction=" + (direction == 0 ? "向前" : "向后"));
             }
         });
 
