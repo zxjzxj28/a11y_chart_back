@@ -18,6 +18,7 @@ import android.os.SystemClock;
 import android.view.Display;
 import android.view.KeyEvent;
 import android.view.accessibility.AccessibilityEvent;
+import android.accessibilityservice.AccessibilityGestureEvent;
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Toast;
@@ -569,6 +570,239 @@ public class ChartA11yService extends AccessibilityService {
     }
 
     @Override public void onInterrupt() { }
+
+    // ============ 直接监听系统手势 ============
+    /**
+     * 在无障碍服务中直接监听手势事件
+     * 需要配置 flagRequestTouchExplorationMode
+     *
+     * 支持的手势ID (AccessibilityService常量):
+     * - GESTURE_SWIPE_UP = 1
+     * - GESTURE_SWIPE_DOWN = 2
+     * - GESTURE_SWIPE_LEFT = 3
+     * - GESTURE_SWIPE_RIGHT = 4
+     * - GESTURE_SWIPE_LEFT_AND_RIGHT = 5
+     * - GESTURE_SWIPE_RIGHT_AND_LEFT = 6
+     * - GESTURE_SWIPE_UP_AND_DOWN = 7
+     * - GESTURE_SWIPE_DOWN_AND_UP = 8
+     * - GESTURE_DOUBLE_TAP = 17
+     * - GESTURE_DOUBLE_TAP_AND_HOLD = 18
+     * - GESTURE_2_FINGER_SINGLE_TAP = 20
+     * - GESTURE_2_FINGER_DOUBLE_TAP = 21
+     * - GESTURE_2_FINGER_TRIPLE_TAP = 22
+     * - GESTURE_3_FINGER_SINGLE_TAP = 24
+     * - GESTURE_3_FINGER_DOUBLE_TAP = 25
+     * - GESTURE_3_FINGER_TRIPLE_TAP = 26
+     * - GESTURE_2_FINGER_SWIPE_UP = 27
+     * - GESTURE_2_FINGER_SWIPE_DOWN = 28
+     * - GESTURE_2_FINGER_SWIPE_LEFT = 29
+     * - GESTURE_2_FINGER_SWIPE_RIGHT = 30
+     * - GESTURE_3_FINGER_SWIPE_UP = 31
+     * - GESTURE_3_FINGER_SWIPE_DOWN = 32
+     * - GESTURE_3_FINGER_SWIPE_LEFT = 33
+     * - GESTURE_3_FINGER_SWIPE_RIGHT = 34
+     */
+    @Override
+    protected boolean onGesture(int gestureId) {
+        // 只有在图表模式下才处理手势
+        if (panel == null || !panel.isShowing()) {
+            return false; // 不拦截，让系统处理
+        }
+
+        String gestureName = getGestureName(gestureId);
+        android.util.Log.d("ChartA11yService", "检测到手势: " + gestureName + " (ID: " + gestureId + ")");
+
+        switch (gestureId) {
+            // ===== 双击相关 =====
+            case GESTURE_DOUBLE_TAP: // 17
+                showGestureToast("双击 (单指)");
+                if (chartGestureCallback != null) {
+                    // 可以触发某些操作
+                }
+                return true;
+
+            case GESTURE_DOUBLE_TAP_AND_HOLD: // 18
+                showGestureToast("长按 (双击后保持)");
+                return true;
+
+            // ===== 双指手势 =====
+            case 20: // GESTURE_2_FINGER_SINGLE_TAP
+                showGestureToast("双指单击");
+                return true;
+
+            case 21: // GESTURE_2_FINGER_DOUBLE_TAP
+                showGestureToast("双指双击");
+                if (chartGestureCallback != null) {
+                    chartGestureCallback.onTwoFingerDoubleTap();
+                }
+                return true;
+
+            case 22: // GESTURE_2_FINGER_TRIPLE_TAP
+                showGestureToast("双指三击");
+                return true;
+
+            // ===== 三指手势 =====
+            case 24: // GESTURE_3_FINGER_SINGLE_TAP
+                showGestureToast("三指单击");
+                return true;
+
+            case 25: // GESTURE_3_FINGER_DOUBLE_TAP
+                showGestureToast("三指双击");
+                if (chartGestureCallback != null) {
+                    chartGestureCallback.onThreeFingerDoubleTap();
+                }
+                return true;
+
+            case 26: // GESTURE_3_FINGER_TRIPLE_TAP
+                showGestureToast("三指三击");
+                return true;
+
+            // ===== 双指滑动 =====
+            case 27: // GESTURE_2_FINGER_SWIPE_UP
+                showGestureToast("双指上滑");
+                if (chartGestureCallback != null) {
+                    chartGestureCallback.onTwoFingerSwipe(2); // 2=上
+                }
+                return true;
+
+            case 28: // GESTURE_2_FINGER_SWIPE_DOWN
+                showGestureToast("双指下滑");
+                if (chartGestureCallback != null) {
+                    chartGestureCallback.onTwoFingerSwipe(3); // 3=下
+                }
+                return true;
+
+            case 29: // GESTURE_2_FINGER_SWIPE_LEFT
+                showGestureToast("双指左滑");
+                if (chartGestureCallback != null) {
+                    chartGestureCallback.onTwoFingerSwipe(0); // 0=左
+                }
+                return true;
+
+            case 30: // GESTURE_2_FINGER_SWIPE_RIGHT
+                showGestureToast("双指右滑");
+                if (chartGestureCallback != null) {
+                    chartGestureCallback.onTwoFingerSwipe(1); // 1=右
+                }
+                return true;
+
+            // ===== 三指滑动 =====
+            case 31: // GESTURE_3_FINGER_SWIPE_UP
+                showGestureToast("三指上滑");
+                if (chartGestureCallback != null) {
+                    chartGestureCallback.onThreeFingerSwipe(2);
+                }
+                return true;
+
+            case 32: // GESTURE_3_FINGER_SWIPE_DOWN
+                showGestureToast("三指下滑");
+                if (chartGestureCallback != null) {
+                    chartGestureCallback.onThreeFingerSwipe(3);
+                }
+                return true;
+
+            case 33: // GESTURE_3_FINGER_SWIPE_LEFT
+                showGestureToast("三指左滑");
+                if (chartGestureCallback != null) {
+                    chartGestureCallback.onThreeFingerSwipe(0);
+                }
+                return true;
+
+            case 34: // GESTURE_3_FINGER_SWIPE_RIGHT
+                showGestureToast("三指右滑");
+                if (chartGestureCallback != null) {
+                    chartGestureCallback.onThreeFingerSwipe(1);
+                }
+                return true;
+
+            // ===== 单指滑动 (可用于滚动) =====
+            case GESTURE_SWIPE_UP: // 1
+                showGestureToast("单指上滑 (滚动向前)");
+                return true;
+
+            case GESTURE_SWIPE_DOWN: // 2
+                showGestureToast("单指下滑 (滚动向后)");
+                return true;
+
+            case GESTURE_SWIPE_LEFT: // 3
+                showGestureToast("单指左滑");
+                return true;
+
+            case GESTURE_SWIPE_RIGHT: // 4
+                showGestureToast("单指右滑");
+                return true;
+
+            // ===== 角落滑动 =====
+            case GESTURE_SWIPE_DOWN_AND_UP: // 8
+                showGestureToast("下滑再上滑");
+                return true;
+
+            case GESTURE_SWIPE_UP_AND_DOWN: // 7
+                showGestureToast("上滑再下滑");
+                return true;
+
+            case GESTURE_SWIPE_LEFT_AND_RIGHT: // 5
+                showGestureToast("左滑再右滑");
+                return true;
+
+            case GESTURE_SWIPE_RIGHT_AND_LEFT: // 6
+                showGestureToast("右滑再左滑");
+                return true;
+
+            default:
+                showGestureToast("未知手势: " + gestureId);
+                return false;
+        }
+    }
+
+    // API 33+ 的新方法（可选实现）
+    @Override
+    public boolean onGesture(AccessibilityGestureEvent gestureEvent) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            int gestureId = gestureEvent.getGestureId();
+            android.util.Log.d("ChartA11yService", "onGesture(Event): " + gestureId);
+            // 调用旧方法处理
+            return onGesture(gestureId);
+        }
+        return super.onGesture(gestureEvent);
+    }
+
+    private void showGestureToast(String message) {
+        mainHandler.post(() -> {
+            android.util.Log.d("ChartA11yService", "手势事件: " + message);
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+        });
+    }
+
+    private String getGestureName(int gestureId) {
+        switch (gestureId) {
+            case 1: return "SWIPE_UP";
+            case 2: return "SWIPE_DOWN";
+            case 3: return "SWIPE_LEFT";
+            case 4: return "SWIPE_RIGHT";
+            case 5: return "SWIPE_LEFT_AND_RIGHT";
+            case 6: return "SWIPE_RIGHT_AND_LEFT";
+            case 7: return "SWIPE_UP_AND_DOWN";
+            case 8: return "SWIPE_DOWN_AND_UP";
+            case 17: return "DOUBLE_TAP";
+            case 18: return "DOUBLE_TAP_AND_HOLD";
+            case 20: return "2_FINGER_SINGLE_TAP";
+            case 21: return "2_FINGER_DOUBLE_TAP";
+            case 22: return "2_FINGER_TRIPLE_TAP";
+            case 24: return "3_FINGER_SINGLE_TAP";
+            case 25: return "3_FINGER_DOUBLE_TAP";
+            case 26: return "3_FINGER_TRIPLE_TAP";
+            case 27: return "2_FINGER_SWIPE_UP";
+            case 28: return "2_FINGER_SWIPE_DOWN";
+            case 29: return "2_FINGER_SWIPE_LEFT";
+            case 30: return "2_FINGER_SWIPE_RIGHT";
+            case 31: return "3_FINGER_SWIPE_UP";
+            case 32: return "3_FINGER_SWIPE_DOWN";
+            case 33: return "3_FINGER_SWIPE_LEFT";
+            case 34: return "3_FINGER_SWIPE_RIGHT";
+            default: return "UNKNOWN_" + gestureId;
+        }
+    }
 
     // ============ 修改 togglePanel 方法 ============
     private void togglePanel() {
