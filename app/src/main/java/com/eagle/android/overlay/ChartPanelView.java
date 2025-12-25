@@ -316,6 +316,27 @@ public class ChartPanelView extends FrameLayout {
         this.summaryText = summary;
         image.setImageBitmap(bmp);
 
+        // 设置无障碍事件回调
+        nodeLayer.setAccessibilityEventCallback(new NodeLayer.AccessibilityEventCallback() {
+            @Override
+            public void onDoubleTap(float x, float y) {
+                // 双击事件（TalkBack双击触发）
+                System.out.println("ChartPanelView: 双击事件 at (" + x + ", " + y + ")");
+            }
+
+            @Override
+            public void onLongPress(float x, float y) {
+                // 长按事件（TalkBack长按触发）
+                System.out.println("ChartPanelView: 长按事件 at (" + x + ", " + y + ")");
+            }
+
+            @Override
+            public void onScroll(int direction) {
+                // 滚动事件（0=向前, 1=向后）- 不实际滚动视图
+                System.out.println("ChartPanelView: 滚动事件 direction=" + (direction == 0 ? "向前" : "向后"));
+            }
+        });
+
         // 不改焦点；首帧抑制内容变更事件，避免开窗双播报
         nodeLayer.setChartBitmap(
                 bmp, chartRectOnScreen, nodes
