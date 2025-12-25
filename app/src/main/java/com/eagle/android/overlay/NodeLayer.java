@@ -4,9 +4,14 @@ import android.content.Context;
 import android.graphics.*;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Toast;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
@@ -26,6 +31,12 @@ public class NodeLayer extends View {
     private float scale = 1f;
 
     private Rect focusedScreenRect = null;
+
+    // ============ 长按检测相关 ============
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private GestureDetector gestureDetector;
+    private float lastTouchX, lastTouchY;
+    private boolean isLongPressDetected = false;
 
     // ============ 无障碍事件回调接口 ============
     public interface AccessibilityEventCallback {
@@ -79,19 +90,15 @@ public class NodeLayer extends View {
             info.setBoundsInParent(local);
             info.setContentDescription(n.label);
 
-            // 添加无障碍动作：点击（双击触发）、长按、滚动
+            // 添加无障碍动作：点击（双击触发）
+            // 注意：滚动和长按改为在视图级别监听，不再在虚拟节点上
             info.addAction(AccessibilityNodeInfoCompat.ACTION_CLICK);
-            info.addAction(AccessibilityNodeInfoCompat.ACTION_LONG_CLICK);
-            info.addAction(AccessibilityNodeInfoCompat.ACTION_SCROLL_FORWARD);
-            info.addAction(AccessibilityNodeInfoCompat.ACTION_SCROLL_BACKWARD);
 
             info.setClassName("android.view.View");
             info.setPackageName(getContext().getPackageName());
 
             info.setFocusable(true);
             info.setClickable(true);
-            info.setLongClickable(true);
-            info.setScrollable(true);
         }
         // 设置对每一个虚拟子节点的无障碍操作如何响应
         @Override protected boolean onPerformActionForVirtualView(int id, int action, Bundle args) {
@@ -115,28 +122,6 @@ public class NodeLayer extends View {
                     sendEventForVirtualView(id, android.view.accessibility.AccessibilityEvent.TYPE_VIEW_CLICKED);
                 }
                 return ok;
-            } else if (action == AccessibilityNodeInfoCompat.ACTION_LONG_CLICK) {
-                // 长按事件
-                showEvent("长按: " + n.label);
-                if (eventCallback != null) {
-                    eventCallback.onLongPress(centerX, centerY);
-                }
-                sendEventForVirtualView(id, android.view.accessibility.AccessibilityEvent.TYPE_VIEW_LONG_CLICKED);
-                return true;
-            } else if (action == AccessibilityNodeInfoCompat.ACTION_SCROLL_FORWARD) {
-                // 滚动向前事件（不实际滚动）
-                showEvent("滚动向前");
-                if (eventCallback != null) {
-                    eventCallback.onScroll(0); // 0=向前
-                }
-                return true; // 返回true但不实际滚动
-            } else if (action == AccessibilityNodeInfoCompat.ACTION_SCROLL_BACKWARD) {
-                // 滚动向后事件（不实际滚动）
-                showEvent("滚动向后");
-                if (eventCallback != null) {
-                    eventCallback.onScroll(1); // 1=向后
-                }
-                return true; // 返回true但不实际滚动
             } else if (action == AccessibilityNodeInfoCompat.ACTION_ACCESSIBILITY_FOCUS) {
                 Log.d(TAG, "聚焦到了" + n.label);
                 focusedScreenRect = n.rectScreen; invalidate(); return true;
@@ -157,6 +142,70 @@ public class NodeLayer extends View {
         setFocusable(true);
         setFocusableInTouchMode(true);
         ViewCompat.setAccessibilityDelegate(this, a11yHelper);
+
+        // 初始化 GestureDetector 用于检测长按
+        gestureDetector = new GestureDetector(ctx, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public void onLongPress(MotionEvent e) {
+                isLongPressDetected = true;
+                float x = e.getX();
+                float y = e.getY();
+                showEvent("长按视图");
+                Log.d(TAG, "长按检测到: (" + x + ", " + y + ")");
+                if (eventCallback != null) {
+                    eventCallback.onLongPress(x, y);
+                }
+                // 发送长按无障碍事件
+                sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_LONG_CLICKED);
+            }
+
+            @Override
+            public boolean onDown(MotionEvent e) {
+                isLongPressDetected = false;
+                return true; // 返回true表示我们要处理后续事件
+            }
+        });
+        gestureDetector.setIsLongpressEnabled(true);
+    }
+
+    // ============ 视图级别的滚动支持 ============
+    @Override
+    public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info) {
+        super.onInitializeAccessibilityNodeInfo(info);
+        // 为整个视图添加滚动动作
+        info.addAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_FORWARD);
+        info.addAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_BACKWARD);
+        info.setScrollable(true);
+        info.setLongClickable(true);
+        info.addAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_LONG_CLICK);
+    }
+
+    @Override
+    public boolean performAccessibilityAction(int action, Bundle arguments) {
+        switch (action) {
+            case AccessibilityNodeInfo.ACTION_SCROLL_FORWARD:
+                showEvent("滚动向前(视图)");
+                Log.d(TAG, "视图滚动: 向前");
+                if (eventCallback != null) {
+                    eventCallback.onScroll(0); // 0=向前
+                }
+                return true;
+            case AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD:
+                showEvent("滚动向后(视图)");
+                Log.d(TAG, "视图滚动: 向后");
+                if (eventCallback != null) {
+                    eventCallback.onScroll(1); // 1=向后
+                }
+                return true;
+            case AccessibilityNodeInfo.ACTION_LONG_CLICK:
+                showEvent("长按(视图)");
+                Log.d(TAG, "视图长按动作");
+                if (eventCallback != null) {
+                    eventCallback.onLongPress(getWidth() / 2f, getHeight() / 2f);
+                }
+                return true;
+        }
+        return super.performAccessibilityAction(action, arguments);
     }
 
 
@@ -249,12 +298,23 @@ public class NodeLayer extends View {
     }
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        // 首先让 GestureDetector 处理事件（用于长按检测）
+        boolean gestureHandled = gestureDetector.onTouchEvent(event);
+        lastTouchX = event.getX();
+        lastTouchY = event.getY();
+
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
                 // 拿住事件流，避免穿透
                 return true;
 
             case MotionEvent.ACTION_UP: {
+                // 如果是长按事件，不处理点击
+                if (isLongPressDetected) {
+                    isLongPressDetected = false;
+                    return true;
+                }
+
                 int virtualId = hitTestVirtualId(event.getX(), event.getY());
                 if (virtualId != ExploreByTouchHelper.INVALID_ID) {
                     androidx.core.view.accessibility.AccessibilityNodeProviderCompat p =
@@ -275,8 +335,12 @@ public class NodeLayer extends View {
             case MotionEvent.ACTION_MOVE:
                 // 返回true阻止视图滚动
                 return true;
+
+            case MotionEvent.ACTION_CANCEL:
+                isLongPressDetected = false;
+                break;
         }
-        return super.onTouchEvent(event);
+        return gestureHandled || super.onTouchEvent(event);
     }
     private RectF mapScreenRectToLocal(Rect screenRect) {
         float rx = screenRect.left - chartRectScreen.left;
