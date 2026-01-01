@@ -26,7 +26,8 @@ import androidx.annotation.NonNull;
 
 import com.eagle.android.a11y.ReadingOrderHelper;
 import com.eagle.android.detector.ChartDetector;
-import com.eagle.android.detector.DemoChartDetector; // 演示用，接入真模型后替换
+import com.eagle.android.detector.DemoChartDetector;
+import com.eagle.android.detector.YOLOv11Detector;
 import com.eagle.android.model.ChartResult;
 import com.eagle.android.model.NodeSpec;
 import com.eagle.android.overlay.ChartPanelWindow;
@@ -66,8 +67,12 @@ public class ChartA11yService extends AccessibilityService {
     private AccessibilityButtonController.AccessibilityButtonCallback abCb;
     private Handler mainHandler;
     private final ExecutorService io = Executors.newSingleThreadExecutor();
-    private ChartDetector detector = new DemoChartDetector(); // TODO: 替换为你的真实实现
+    private ChartDetector detector;
+    private YOLOv11Detector yoloDetector; // YOLOv11检测器实例
     private ChartAccessOverlayManager demoAccessOverlayManager;
+
+    // 是否使用YOLOv11检测器（可通过设置切换）
+    private static final boolean USE_YOLO_DETECTOR = true;
 
     // 截屏节流
     private static final long SHOT_INTERVAL_MS = 1000;
@@ -100,6 +105,9 @@ public class ChartA11yService extends AccessibilityService {
         super.onServiceConnected();
 
         mainHandler = new Handler(Looper.getMainLooper());
+
+        // 初始化检测器
+        initializeDetector();
 
         // 创建手势回调
         chartGestureCallback = new ChartGestureCallback() {
@@ -438,6 +446,34 @@ public class ChartA11yService extends AccessibilityService {
         demoAccessOverlayManager = ChartAccessOverlayDemo.showMockOverlay(this);
     }
 
+    /**
+     * 初始化检测器
+     * 根据配置选择使用YOLOv11检测器或Demo检测器
+     */
+    private void initializeDetector() {
+        if (USE_YOLO_DETECTOR) {
+            yoloDetector = new YOLOv11Detector(this);
+            // 异步初始化模型
+            io.execute(() -> {
+                boolean success = yoloDetector.initialize();
+                mainHandler.post(() -> {
+                    if (success) {
+                        detector = yoloDetector;
+                        Toast.makeText(this, "YOLOv11模型加载成功", Toast.LENGTH_SHORT).show();
+                    } else {
+                        // 回退到Demo检测器
+                        detector = new DemoChartDetector();
+                        Toast.makeText(this, "YOLOv11加载失败，使用演示模式", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            });
+            // 在模型加载期间使用Demo检测器
+            detector = new DemoChartDetector();
+        } else {
+            detector = new DemoChartDetector();
+        }
+    }
+
     // ============ 修改 onDestroy 方法 ============
     @Override
     public void onDestroy() {
@@ -445,6 +481,12 @@ public class ChartA11yService extends AccessibilityService {
 
         // 确保清理手势直通
         disableGesturePassthrough();
+
+        // 释放YOLOv11资源
+        if (yoloDetector != null) {
+            yoloDetector.release();
+            yoloDetector = null;
+        }
 
         if (ab != null && abCb != null) ab.unregisterAccessibilityButtonCallback(abCb);
         io.shutdownNow();
