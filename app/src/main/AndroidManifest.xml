@@ -39,6 +39,10 @@
             android:name=".ChartPreviewActivity"
             android:exported="false"
             android:label="@string/open_chart_preview" />
+        <activity
+            android:name=".TestYOLOv11Activity"
+            android:exported="false"
+            android:label="YOLOv11 测试" />
         <!-- &lt;!&ndash; 注册广播接收器 &ndash;&gt; -->
         <!-- <receiver -->
         <!-- android:name=".ActionReceiver" -->

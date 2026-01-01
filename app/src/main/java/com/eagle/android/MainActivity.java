@@ -61,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
         Button btnOpen = findViewById(R.id.btnOpenA11y);
         Button btnPreview = findViewById(R.id.btnOpenChartPreview);
         Button btnShowMockAccessOverlay = findViewById(R.id.btnShowMockAccessOverlay);
+        Button btnTestYOLOv11 = findViewById(R.id.btnTestYOLOv11);
 
         refreshA11yStatus();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -87,6 +88,11 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(MainActivity.this, ChartA11yService.class);
             intent.setAction(ChartA11yService.ACTION_SHOW_MOCK_ACCESS_OVERLAY);
             startService(intent);
+        });
+
+        btnTestYOLOv11.setOnClickListener(v -> {
+            Intent testIntent = new Intent(MainActivity.this, TestYOLOv11Activity.class);
+            startActivity(testIntent);
         });
     }
     @Override
