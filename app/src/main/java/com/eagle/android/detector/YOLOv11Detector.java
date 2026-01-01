@@ -169,10 +169,7 @@ public class YOLOv11Detector implements ChartDetector {
 
             OrtSession.Result results = ortSession.run(inputs);
 
-            // 4. 获取输出
-            float[] outputData = ((float[][][][]) results.get(0).getValue())[0][0][0];
-
-            // 尝试获取正确的输出形状
+            // 4. 获取输出 - 直接使用rawOutput避免错误的类型转换
             Object rawOutput = results.get(0).getValue();
             float[] flatOutput = flattenOutput(rawOutput);
 
