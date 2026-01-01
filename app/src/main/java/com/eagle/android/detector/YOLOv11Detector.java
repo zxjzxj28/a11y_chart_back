@@ -169,24 +169,59 @@ public class YOLOv11Detector implements ChartDetector {
 
             OrtSession.Result results = ortSession.run(inputs);
 
-            // 4. 获取输出
-            float[] outputData = ((float[][][][]) results.get(0).getValue())[0][0][0];
-
-            // 尝试获取正确的输出形状
+            // 4. 获取输出并处理不同的输出格式
             Object rawOutput = results.get(0).getValue();
-            float[] flatOutput = flattenOutput(rawOutput);
+            Log.d(TAG, "Output type: " + rawOutput.getClass().getSimpleName());
 
-            // 5. 如果需要，转置输出
-            // YOLOv11输出格式: [1, numClasses+4, numBoxes] -> 需要转置为 [numBoxes, numClasses+4]
-            int numBoxes = flatOutput.length / (numClasses + 4);
-            if (needsTranspose && numBoxes > 0) {
-                flatOutput = YOLOv11Utils.transposeOutput(flatOutput, numClasses + 4, numBoxes);
+            // 获取输出形状信息用于正确处理
+            int[] outputShape = getOutputShape(rawOutput);
+            Log.d(TAG, "Output shape: " + java.util.Arrays.toString(outputShape));
+
+            // 5. 处理 YOLOv11 输出格式
+            // YOLOv11 输出格式: [1, numFeatures, numBoxes] 例如 [1, 84, 8400]
+            // 需要转置为 [numBoxes, numFeatures] 即 [8400, 84]
+            float[] flatOutput;
+            int numBoxes;
+            int numFeatures;
+
+            if (outputShape.length == 3) {
+                // 典型的 YOLOv11 输出: [1, features, boxes]
+                numFeatures = outputShape[1];  // 例如 84 (4 + 80 classes)
+                numBoxes = outputShape[2];     // 例如 8400
+
+                // 提取第一个 batch 的数据并转置
+                float[][][] arr3d = (float[][][]) rawOutput;
+                flatOutput = new float[numFeatures * numBoxes];
+
+                // 转置: [features, boxes] -> [boxes, features]
+                for (int f = 0; f < numFeatures; f++) {
+                    for (int b = 0; b < numBoxes; b++) {
+                        flatOutput[b * numFeatures + f] = arr3d[0][f][b];
+                    }
+                }
+
+                Log.d(TAG, "Transposed output: " + numBoxes + " boxes x " + numFeatures + " features");
+            } else {
+                // 其他格式，使用原来的处理方式
+                flatOutput = flattenOutput(rawOutput);
+                numBoxes = flatOutput.length / (numClasses + 4);
+                numFeatures = numClasses + 4;
+
+                if (needsTranspose && numBoxes > 0) {
+                    flatOutput = YOLOv11Utils.transposeOutput(flatOutput, numFeatures, numBoxes);
+                }
             }
 
-            // 6. 后处理
+            // 动态调整类别数量（如果模型输出的特征数不同）
+            int actualNumClasses = numFeatures - 4;
+            if (actualNumClasses != numClasses) {
+                Log.w(TAG, "Model has " + actualNumClasses + " classes, expected " + numClasses);
+            }
+
+            // 6. 后处理（使用实际的类别数量）
             List<Detection> detections = YOLOv11Utils.postprocess(
                     flatOutput,
-                    numClasses,
+                    actualNumClasses,
                     INPUT_SIZE,
                     originalWidth,
                     originalHeight,
@@ -207,6 +242,34 @@ public class YOLOv11Detector implements ChartDetector {
             // 出错时回退到Demo检测器
             return new DemoChartDetector().detectSingleChart(screenshot);
         }
+    }
+
+    /**
+     * 获取输出张量的形状
+     */
+    private int[] getOutputShape(Object output) {
+        if (output instanceof float[]) {
+            return new int[]{((float[]) output).length};
+        } else if (output instanceof float[][]) {
+            float[][] arr = (float[][]) output;
+            return new int[]{arr.length, arr.length > 0 ? arr[0].length : 0};
+        } else if (output instanceof float[][][]) {
+            float[][][] arr = (float[][][]) output;
+            return new int[]{
+                    arr.length,
+                    arr.length > 0 ? arr[0].length : 0,
+                    arr.length > 0 && arr[0].length > 0 ? arr[0][0].length : 0
+            };
+        } else if (output instanceof float[][][][]) {
+            float[][][][] arr = (float[][][][]) output;
+            return new int[]{
+                    arr.length,
+                    arr.length > 0 ? arr[0].length : 0,
+                    arr.length > 0 && arr[0].length > 0 ? arr[0][0].length : 0,
+                    arr.length > 0 && arr[0].length > 0 && arr[0][0].length > 0 ? arr[0][0][0].length : 0
+            };
+        }
+        return new int[0];
     }
 
     /**
