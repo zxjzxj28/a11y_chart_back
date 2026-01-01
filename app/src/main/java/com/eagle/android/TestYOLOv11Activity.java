@@ -30,6 +30,7 @@ public class TestYOLOv11Activity extends AppCompatActivity {
     private TextView tvLog;
     private ScrollView scrollView;
     private Button btnTest;
+    private android.widget.ImageView ivResult;
     private ExecutorService executor;
     private Handler mainHandler;
 
@@ -44,6 +45,7 @@ public class TestYOLOv11Activity extends AppCompatActivity {
         tvLog = findViewById(R.id.tvLog);
         scrollView = findViewById(R.id.scrollView);
         btnTest = findViewById(R.id.btnTest);
+        ivResult = findViewById(R.id.ivResult);
         Button btnClose = findViewById(R.id.btnClose);
 
         executor = Executors.newSingleThreadExecutor();
@@ -106,13 +108,22 @@ public class TestYOLOv11Activity extends AppCompatActivity {
 
                 addLog("✓ 模型初始化成功 (耗时: " + initTime + "ms)\n\n");
 
-                // 3. 运行检测
+                // 3. 运行检测并绘制边界框
                 addLog("🔍 开始运行检测...\n");
                 long detectStartTime = System.currentTimeMillis();
-                ChartResult result = detector.detectSingleChart(testImage);
+                Bitmap resultImage = detector.detectWithBoundingBoxes(testImage);
                 long detectTime = System.currentTimeMillis() - detectStartTime;
 
                 addLog("✓ 检测完成 (耗时: " + detectTime + "ms)\n\n");
+
+                // 显示检测结果图片
+                if (resultImage != null) {
+                    mainHandler.post(() -> ivResult.setImageBitmap(resultImage));
+                    addLog("✓ 检测结果已显示在上方图片中\n\n");
+                }
+
+                // 4. 也运行标准检测来获取详细信息
+                ChartResult result = detector.detectSingleChart(testImage);
 
                 // 4. 分析结果
                 addLog("📊 检测结果分析:\n");
@@ -127,16 +138,15 @@ public class TestYOLOv11Activity extends AppCompatActivity {
                 } else if (result.chartRectOnScreen == null) {
                     addLog("⚠️ 检测失败: 未找到图表区域\n");
                 } else if (result.nodes == null || result.nodes.isEmpty()) {
-                    addLog("⚠️ 检测部分成功: 找到图表区域但未检测到图表元素\n\n");
-                    addLog("图表区域: " + result.chartRectOnScreen + "\n");
+                    addLog("⚠️ 检测失败: 未检测到任何图表\n\n");
                     addLog("\n可能原因:\n");
-                    addLog("  • 图表元素置信度低于25%阈值\n");
-                    addLog("  • 图片中只有图表框架，没有具体元素\n");
+                    addLog("  • 图表置信度低于25%阈值\n");
+                    addLog("  • 图片中没有bar/line/pie类型的图表\n");
                 } else {
                     // 成功！
                     addLog("✅ 检测成功！\n\n");
                     addLog("图表区域: " + result.chartRectOnScreen + "\n");
-                    addLog("检测到 " + result.nodes.size() + " 个图表元素:\n\n");
+                    addLog("检测到 " + result.nodes.size() + " 个图表:\n\n");
 
                     for (NodeSpec node : result.nodes) {
                         addLog(String.format(
@@ -147,34 +157,22 @@ public class TestYOLOv11Activity extends AppCompatActivity {
                         ));
                     }
 
-                    // 统计各类型元素数量
+                    // 统计各类型图表数量
                     int barCount = 0;
-                    int linePointCount = 0;
-                    int pieSliceCount = 0;
-                    int axisLabelCount = 0;
-                    int legendCount = 0;
-                    int titleCount = 0;
-                    int dataLabelCount = 0;
+                    int lineCount = 0;
+                    int pieCount = 0;
 
                     for (NodeSpec node : result.nodes) {
                         String label = node.label;
                         if (label.contains("柱状图")) barCount++;
-                        else if (label.contains("折线图")) linePointCount++;
-                        else if (label.contains("饼图")) pieSliceCount++;
-                        else if (label.contains("坐标轴")) axisLabelCount++;
-                        else if (label.contains("图例")) legendCount++;
-                        else if (label.contains("标题")) titleCount++;
-                        else if (label.contains("数据标签")) dataLabelCount++;
+                        else if (label.contains("折线图")) lineCount++;
+                        else if (label.contains("饼图")) pieCount++;
                     }
 
-                    addLog("元素类型统计:\n");
-                    if (barCount > 0) addLog("  • 柱状图柱子: " + barCount + "\n");
-                    if (linePointCount > 0) addLog("  • 折线图数据点: " + linePointCount + "\n");
-                    if (pieSliceCount > 0) addLog("  • 饼图扇区: " + pieSliceCount + "\n");
-                    if (axisLabelCount > 0) addLog("  • 坐标轴标签: " + axisLabelCount + "\n");
-                    if (legendCount > 0) addLog("  • 图例: " + legendCount + "\n");
-                    if (titleCount > 0) addLog("  • 标题: " + titleCount + "\n");
-                    if (dataLabelCount > 0) addLog("  • 数据标签: " + dataLabelCount + "\n");
+                    addLog("图表类型统计:\n");
+                    if (barCount > 0) addLog("  • 柱状图: " + barCount + "\n");
+                    if (lineCount > 0) addLog("  • 折线图: " + lineCount + "\n");
+                    if (pieCount > 0) addLog("  • 饼图: " + pieCount + "\n");
                 }
 
                 addLog("\n─────────────────────────────\n");
