@@ -46,4 +46,7 @@ dependencies {
     implementation 'androidx.core:core:1.13.1'
     implementation 'androidx.customview:customview:1.2.0'
     implementation "androidx.preference:preference:1.2.1"
+
+    // ONNX Runtime for YOLOv11 inference
+    implementation 'com.microsoft.onnxruntime:onnxruntime-android:1.16.3'
 }
