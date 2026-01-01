@@ -16,33 +16,84 @@ public class YOLOv11Utils {
 
     /**
      * 将Bitmap预处理为模型输入张量
+     * 使用letterbox方法保持长宽比，符合YOLOv11 ONNX模型输入要求：
+     * - 输入尺寸: 640x640 (静态)
+     * - 格式: FP32 (half=False)
+     * - 通道顺序: RGB
+     * - 归一化: 0-1
+     *
      * @param bitmap 输入图像
      * @param inputSize 模型输入尺寸（例如640）
      * @return 归一化后的浮点数组 [1, 3, inputSize, inputSize]
      */
     public static float[] preprocessImage(Bitmap bitmap, int inputSize) {
-        // 缩放图像到模型输入尺寸
-        Bitmap resized = Bitmap.createScaledBitmap(bitmap, inputSize, inputSize, true);
+        // 使用letterbox保持长宽比
+        Bitmap letterboxed = createLetterboxBitmap(bitmap, inputSize, inputSize);
 
         int[] pixels = new int[inputSize * inputSize];
-        resized.getPixels(pixels, 0, inputSize, 0, 0, inputSize, inputSize);
+        letterboxed.getPixels(pixels, 0, inputSize, 0, 0, inputSize, inputSize);
 
         // NCHW格式：[1, 3, H, W]
+        // 按照YOLOv11要求归一化到0-1范围
         float[] inputData = new float[3 * inputSize * inputSize];
 
         for (int i = 0; i < pixels.length; i++) {
             int pixel = pixels[i];
-            // RGB通道，归一化到0-1
+            // RGB通道，归一化到0-1（符合half=False的FP32格式）
             inputData[i] = ((pixel >> 16) & 0xFF) / 255.0f;                    // R
             inputData[inputSize * inputSize + i] = ((pixel >> 8) & 0xFF) / 255.0f;  // G
             inputData[2 * inputSize * inputSize + i] = (pixel & 0xFF) / 255.0f;      // B
         }
 
-        if (resized != bitmap) {
-            resized.recycle();
+        if (letterboxed != bitmap) {
+            letterboxed.recycle();
         }
 
         return inputData;
+    }
+
+    /**
+     * 创建letterbox图像，保持长宽比并用灰色填充
+     * 这符合YOLOv11训练时的图像处理方式
+     *
+     * @param source 源图像
+     * @param targetWidth 目标宽度
+     * @param targetHeight 目标高度
+     * @return letterbox处理后的图像
+     */
+    private static Bitmap createLetterboxBitmap(Bitmap source, int targetWidth, int targetHeight) {
+        int sourceWidth = source.getWidth();
+        int sourceHeight = source.getHeight();
+
+        // 计算缩放比例，保持长宽比
+        float scale = Math.min(
+            (float) targetWidth / sourceWidth,
+            (float) targetHeight / sourceHeight
+        );
+
+        int scaledWidth = (int) (sourceWidth * scale);
+        int scaledHeight = (int) (sourceHeight * scale);
+
+        // 缩放图像
+        Bitmap scaled = Bitmap.createScaledBitmap(source, scaledWidth, scaledHeight, true);
+
+        // 创建目标大小的bitmap，填充灰色背景（114, 114, 114）
+        Bitmap letterbox = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888);
+        android.graphics.Canvas canvas = new android.graphics.Canvas(letterbox);
+        canvas.drawColor(0xFF727272); // 灰色背景 (114, 114, 114)
+
+        // 计算居中位置
+        int left = (targetWidth - scaledWidth) / 2;
+        int top = (targetHeight - scaledHeight) / 2;
+
+        // 将缩放后的图像绘制到中心
+        canvas.drawBitmap(scaled, left, top, null);
+
+        if (scaled != source) {
+            scaled.recycle();
+        }
+
+        return letterbox;
     }
 
     /**
