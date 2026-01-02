@@ -37,6 +37,8 @@ import com.eagle.android.overlay.DebugMarkOverlay;
 import com.eagle.android.overlay.FocusSwitchOverlay;
 import com.eagle.android.overlay.SimpleOverLay;
 import com.eagle.android.overlay.SimpleVirtualNodeOverlay;
+import com.eagle.android.voice.IflytekConfig;
+import com.eagle.android.voice.VoiceManager;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -70,6 +72,13 @@ public class ChartA11yService extends AccessibilityService {
     private ChartDetector detector;
     private YOLOv11Detector yoloDetector; // YOLOv11检测器实例
     private ChartAccessOverlayManager demoAccessOverlayManager;
+
+    // ============ 语音功能相关 ============
+    private VoiceManager voiceManager;
+    private boolean voiceEnabled = false;
+    // 语音指令配置
+    private String voicePrevCommand, voiceNextCommand, voiceRepeatCommand;
+    private String voiceSummaryCommand, voiceAutoCommand, voiceExitCommand;
 
     // 是否使用YOLOv11检测器（可通过设置切换）
     private static final boolean USE_YOLO_DETECTOR = true;
@@ -173,17 +182,20 @@ public class ChartA11yService extends AccessibilityService {
         String gestureClose = sp.getString("gesture_close_action", "SWIPE_DOWN_LEFT");
         String gestureRepeat = sp.getString("gesture_repeat_action", "ONE_FINGER_DOUBLE_TAP");
         String gestureAuto = sp.getString("gesture_auto_broadcast_action", "THREE_FINGER_SWIPE");
-        String prevCommand = sp.getString("voice_command_prev_focus", "上一个");
-        String nextCommand = sp.getString("voice_command_next_focus", "下一个");
-        String repeatCommand = sp.getString("voice_command_repeat", "重复朗读");
-        String summaryCommand = sp.getString("voice_command_summary", "播放摘要");
-        String autoCommand = sp.getString("voice_command_auto", "自动播报");
-        String exitCommand = sp.getString("voice_command_exit", "退出");
+        voicePrevCommand = sp.getString("voice_command_prev_focus", "上一个");
+        voiceNextCommand = sp.getString("voice_command_next_focus", "下一个");
+        voiceRepeatCommand = sp.getString("voice_command_repeat", "重复朗读");
+        voiceSummaryCommand = sp.getString("voice_command_summary", "播放摘要");
+        voiceAutoCommand = sp.getString("voice_command_auto", "自动播报");
+        voiceExitCommand = sp.getString("voice_command_exit", "退出");
         System.out.println("gestureClose:" + gestureClose + " gestureRepeat:" + gestureRepeat +
                 " gestureAuto:" + gestureAuto);
-        System.out.println("prevCommand:" + prevCommand + " nextCommand:" + nextCommand +
-                " repeatCommand:" + repeatCommand + " summaryCommand:" + summaryCommand +
-                " autoCommand:" + autoCommand + " exitCommand:" + exitCommand);
+        System.out.println("prevCommand:" + voicePrevCommand + " nextCommand:" + voiceNextCommand +
+                " repeatCommand:" + voiceRepeatCommand + " summaryCommand:" + voiceSummaryCommand +
+                " autoCommand:" + voiceAutoCommand + " exitCommand:" + voiceExitCommand);
+
+        // ============ 初始化语音功能 ============
+        initVoiceManager();
         AccessibilityServiceInfo info = getServiceInfo();
         info.flags |= android.accessibilityservice.AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS;
         setServiceInfo(info);
@@ -482,6 +494,9 @@ public class ChartA11yService extends AccessibilityService {
         // 确保清理手势直通
         disableGesturePassthrough();
 
+        // 释放语音资源
+        stopVoiceManager();
+
         // 释放YOLOv11资源
         if (yoloDetector != null) {
             yoloDetector.release();
@@ -763,5 +778,138 @@ public class ChartA11yService extends AccessibilityService {
             panel.hide();
         }
         Toast.makeText(this, "已退出图表模式", Toast.LENGTH_SHORT).show();
+    }
+
+    // ============ 语音功能实现 ============
+
+    /**
+     * 初始化语音管理器
+     */
+    private void initVoiceManager() {
+        SharedPreferences sp = getSharedPreferences("a11y_prefs", MODE_PRIVATE);
+        voiceEnabled = sp.getBoolean("feature_shortcut_voice_enabled", false);
+
+        if (!voiceEnabled) {
+            System.out.println("语音功能未启用");
+            return;
+        }
+
+        if (!IflytekConfig.isConfigured()) {
+            System.out.println("讯飞SDK未配置，语音功能不可用");
+            Toast.makeText(this, "请先配置讯飞APPID", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        voiceManager = new VoiceManager(this);
+        voiceManager.setCallback(new VoiceManager.VoiceCallback() {
+            @Override
+            public void onWakeup() {
+                // 唤醒成功，开始语音识别
+                mainHandler.post(() -> {
+                    Toast.makeText(ChartA11yService.this, "我在听...", Toast.LENGTH_SHORT).show();
+                    announce("我在听");
+                    voiceManager.startRecognition();
+                });
+            }
+
+            @Override
+            public void onRecognitionResult(String text) {
+                mainHandler.post(() -> {
+                    handleVoiceCommand(text);
+                    // 识别完成后继续监听唤醒
+                    if (voiceEnabled) {
+                        voiceManager.startWakeupListening();
+                    }
+                });
+            }
+
+            @Override
+            public void onError(String message) {
+                mainHandler.post(() -> {
+                    System.out.println("语音错误: " + message);
+                    // 出错后尝试恢复唤醒监听
+                    if (voiceEnabled && voiceManager != null) {
+                        voiceManager.startWakeupListening();
+                    }
+                });
+            }
+
+            @Override
+            public void onStatusChange(VoiceManager.VoiceStatus status) {
+                System.out.println("语音状态: " + status);
+            }
+        });
+
+        // 初始化并开始唤醒监听
+        if (voiceManager.initWakeuper() && voiceManager.initRecognizer()) {
+            voiceManager.startWakeupListening();
+            Toast.makeText(this, "语音唤醒已启动", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, "语音初始化失败", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * 处理语音指令
+     */
+    private void handleVoiceCommand(String text) {
+        if (text == null || text.isEmpty()) {
+            announce("未识别到语音");
+            return;
+        }
+
+        System.out.println("识别到语音: " + text);
+
+        // 匹配语音指令
+        if (text.contains(voicePrevCommand)) {
+            // 上一个焦点
+            announce("上一个");
+            if (panel != null && panel.isShowing()) {
+                panel.moveFocusPrev();
+            }
+        } else if (text.contains(voiceNextCommand)) {
+            // 下一个焦点
+            announce("下一个");
+            if (panel != null && panel.isShowing()) {
+                panel.moveFocusNext();
+            }
+        } else if (text.contains(voiceRepeatCommand)) {
+            // 重复朗读当前内容
+            announce("重复");
+            if (panel != null && panel.isShowing()) {
+                panel.repeatCurrentFocus();
+            }
+        } else if (text.contains(voiceSummaryCommand)) {
+            // 播放摘要
+            announce("播放摘要");
+            if (panel != null && panel.isShowing()) {
+                panel.playSummary();
+            }
+        } else if (text.contains(voiceAutoCommand)) {
+            // 自动播报
+            announce("自动播报");
+            if (panel != null && panel.isShowing()) {
+                panel.toggleAutoBroadcast();
+            }
+        } else if (text.contains(voiceExitCommand)) {
+            // 退出图表模式
+            exitChartMode();
+        } else if (text.contains("进入") || text.contains("打开图表")) {
+            // 进入图表模式
+            enterChartMode();
+        } else {
+            // 未匹配到指令
+            announce("未识别指令: " + text);
+        }
+    }
+
+    /**
+     * 停止语音功能
+     */
+    private void stopVoiceManager() {
+        if (voiceManager != null) {
+            voiceManager.release();
+            voiceManager = null;
+        }
     }
 }

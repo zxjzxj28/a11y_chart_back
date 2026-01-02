@@ -29,9 +29,18 @@ android {
     buildFeatures {
         viewBinding true
     }
+
+    // JNI库路径配置（讯飞SDK需要）
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['src/main/jniLibs']
+        }
+    }
 }
 
 dependencies {
+    // 科大讯飞语音SDK（需要手动下载放到libs目录）
+    implementation files('libs/Msc.jar')
 
     implementation libs.appcompat
     implementation libs.material
